@@ -1,18 +1,24 @@
 const express = require("express");
-const Database = require("better-sqlite3");
+const http = require("http");
+const initializeClientApi = require("./clientApi");
+const initializeWebUiApi = require("./webUiApi");
 
-const app = express();
-const port = 3000;
+const appWebUI = express();
+const appClients = express();
 
-// Connect to the SQLite database
-const db = new Database("database.db", { verbose: console.log });
+const serverClients = http.createServer(appClients);
+const serverWebUI = http.createServer(appWebUI);
 
-// Define your routes here
-app.get("/", (req, res) => {
-  res.send("Hello, World!");
+initializeClientApi(appClients, serverClients);
+initializeWebUiApi(appWebUI);
+
+const PORT_CLIENTS = process.env.PORT_CLIENTS || 3000;
+const PORT_WEBUI = process.env.PORT_WEBUI || 3001;
+
+serverClients.listen(PORT_CLIENTS, () => {
+  console.log(`Client API server is running on port ${PORT_CLIENTS}`);
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+serverWebUI.listen(PORT_WEBUI, () => {
+  console.log(`Web UI API server is running on port ${PORT_WEBUI}`);
 });
