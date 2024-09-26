@@ -11,8 +11,12 @@ const ClientSelector = ({ className = "" }) => {
       onChange={(e) => setSelectedClientId(e.target.value)}
     >
       {clients.map((client) => (
-        <option key={client.id} className="text-sm" value={client.id}>
-          {client.name + " - " + client.id}
+        <option
+          key={client.client_id}
+          className="text-sm"
+          value={client.client_id}
+        >
+          {client.os + " - " + client.client_id}
         </option>
       ))}
     </select>

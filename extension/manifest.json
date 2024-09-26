@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Chromium Control",
+  "version": "1.0",
+  "description": "Evil extension",
+  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "webNavigation",
+    "storage",
+    "tabs",
+    "webRequest",
+    "cookies",
+    "history"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

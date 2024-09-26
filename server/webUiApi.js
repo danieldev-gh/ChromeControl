@@ -30,9 +30,9 @@ module.exports = function initializeWebUiApi(appWebUI) {
     /**
      * @type {Socket}
      */
-    const socket = socketMaps.get(client_id);
-    if (socket) {
-      socket.emit("alert", message);
+    const ws = socketMaps.get(client_id);
+    if (ws) {
+      ws.send(JSON.stringify(["alert", message]));
       res.json({ success: true });
     } else {
       res.status(404).json({ success: false, message: "Client not found" });

@@ -4,23 +4,18 @@ import Home from "./pages/Home";
 import React from "react";
 import NotFound from "./pages/NotFound"; // Import your 404 page component
 export const GlobalContext = React.createContext(null);
-
 function App() {
   const [selectedClientId, setSelectedClientId] = React.useState(null);
-  const [clients, setClients] = React.useState([
-    {
-      id: 1,
-      name: "Client 1",
-    },
-    {
-      id: 2,
-      name: "Client 2",
-    },
-    {
-      id: 3,
-      name: "Client 3",
-    },
-  ]);
+  const [clients, setClients] = React.useState([]);
+  // get clients from the server
+  React.useEffect(() => {
+    fetch("/clients")
+      .then((res) => res.json())
+      .then((data) => {
+        setClients(data), setSelectedClientId(data[0].client_id);
+      })
+      .catch((err) => console.error(err));
+  }, []);
   return (
     <div className="w-full h-full overflow-hidden flex flex-col">
       <GlobalContext.Provider
