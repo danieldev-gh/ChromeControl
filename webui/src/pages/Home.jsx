@@ -21,7 +21,7 @@ const Home = () => {
           onClick={() => {
             // send alert request to the server with the client id and message
 
-            fetch("/alert", {
+            fetch("http://localhost:3001/alert", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
