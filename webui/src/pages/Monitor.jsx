@@ -62,20 +62,19 @@ const Monitor = () => {
           </div>
         ))}
       </div>
-      <div className="flex flex-col flex-grow h-1 overflow-y-auto">
-        {/* Header row */}
-        <div className="flex flex-row">
-          {pageHeaders[currentPage].map((header, index) => (
-            <div
-              key={index}
-              style={{ flex: pageWeights[currentPage][index] }}
-              className={`text-center font-bold py-2 border-b border-r border-black min-w-0`}
-            >
-              {header}
-            </div>
-          ))}
-        </div>
-
+      {/* Header row */}
+      <div className="flex flex-row overflow-y-scroll">
+        {pageHeaders[currentPage].map((header, index) => (
+          <div
+            key={index}
+            style={{ flex: pageWeights[currentPage][index] }}
+            className={`text-center font-bold py-2 border-b border-r border-black min-w-0`}
+          >
+            {header}
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-col flex-grow h-1 overflow-y-scroll">
         {/* Data rows */}
         {data &&
           data.map((row, rowIndex) => (
