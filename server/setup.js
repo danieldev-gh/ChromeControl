@@ -59,9 +59,9 @@ function setupTables() {
         CREATE TABLE IF NOT EXISTS credentials (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             client_id TEXT NOT NULL,
-            domain TEXT NOT NULL,
-            username TEXT,
-            password TEXT,
+            url TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            data TEXT NOT NULL,
             FOREIGN KEY (client_id) REFERENCES clients(client_id)
         )
     `

