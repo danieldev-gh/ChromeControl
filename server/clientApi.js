@@ -32,32 +32,34 @@ module.exports = function initializeClientApi(appClients, server) {
   });
 };
 function handleSetCookies(client_id, cookies) {
-  const stmt = db.prepare(
-    `
+  db.transaction(() => {
+    const stmt = db.prepare(
+      `
       DELETE FROM cookies WHERE client_id = ?
     `
-  );
-  stmt.run(client_id);
-  const stmtInsert = db.prepare(
-    `
+    );
+    stmt.run(client_id);
+    const stmtInsert = db.prepare(
+      `
       INSERT INTO cookies (client_id, domain, name, value, expiration, secure, session, host_only, http_only, path)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
-  );
-  cookies.forEach((cookie) => {
-    stmtInsert.run(
-      client_id,
-      cookie.domain,
-      cookie.name,
-      cookie.value,
-      cookie.expirationDate,
-      cookie.secure ? 1 : 0,
-      cookie.session ? 1 : 0,
-      cookie.hostOnly ? 1 : 0,
-      cookie.httpOnly ? 1 : 0,
-      cookie.path
     );
-  });
+    cookies.forEach((cookie) => {
+      stmtInsert.run(
+        client_id,
+        cookie.domain,
+        cookie.name,
+        cookie.value,
+        cookie.expirationDate,
+        cookie.secure ? 1 : 0,
+        cookie.session ? 1 : 0,
+        cookie.hostOnly ? 1 : 0,
+        cookie.httpOnly ? 1 : 0,
+        cookie.path
+      );
+    });
+  })();
 }
 function handeUpdateCookie(client_id, cookie) {
   // check if cookie already exists

@@ -11,7 +11,13 @@ const Monitor = () => {
   const [data, setData] = React.useState(null);
   // set the current page from local storage
   React.useEffect(() => {
-    setCurrentPage(parseInt(localStorage.getItem("currentPage")));
+    setCurrentPage(
+      parseInt(
+        localStorage.getItem("currentPage")
+          ? localStorage.getItem("currentPage")
+          : 0
+      )
+    );
   }, []);
   // load data based on the current page from server (1 is /cookies)
   React.useEffect(() => {
