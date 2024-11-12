@@ -1,7 +1,7 @@
 import React from "react";
 import Cookies from "../components/Cookies";
 import Credentials from "../components/Credentials";
-import KeyLogs from "../components/Keylogs";
+import Keylogs from "../components/Keylogs";
 const Monitor = () => {
   const titles = ["Credentials", "Cookies", "Keylogs"];
   const [currentPage, setCurrentPage] = React.useState(0);
@@ -17,7 +17,7 @@ const Monitor = () => {
       case 1:
         return <Cookies />;
       case 2:
-        return <KeyLogs />;
+        return <Keylogs />;
       default:
         return <Credentials />;
     }
