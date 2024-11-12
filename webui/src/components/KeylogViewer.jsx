@@ -143,204 +143,215 @@ const KeylogViewer = ({ keylogs = [] }) => {
 
   // Rest of the component remains similar, just adding new raw view
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-4">
-      {/* Controls section remains the same */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-xl font-semibold mb-4">Keylog Viewer Controls</h2>
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <input
-              type="date"
-              className="border rounded p-2"
-              value={dateRange.start.toISOString().split("T")[0]}
-              onChange={(e) =>
-                setDateRange((prev) => ({
-                  ...prev,
-                  start: new Date(e.target.value),
-                }))
-              }
-            />
-            <span>to</span>
-            <input
-              type="date"
-              className="border rounded p-2"
-              value={dateRange.end.toISOString().split("T")[0]}
-              onChange={(e) =>
-                setDateRange((prev) => ({
-                  ...prev,
-                  end: new Date(e.target.value),
-                }))
-              }
-            />
-          </div>
-
-          <select
-            className="border rounded p-2"
-            value={selectedDomain}
-            onChange={(e) => setSelectedDomain(e.target.value)}
-          >
-            {uniqueDomains.map((domain) => (
-              <option key={domain} value={domain}>
-                {domain}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Sessions Timeline remains the same */}
-      {/* Sessions Timeline */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <h2 className="text-xl font-semibold mb-4">Sessions Timeline</h2>
-        <div className="space-y-2">
-          {sessions.map((session, idx) => (
-            <div
-              key={idx}
-              className={`p-3 border rounded cursor-pointer hover:bg-gray-50 transition-colors ${
-                selectedSession === session ? "bg-blue-50 border-blue-200" : ""
-              }`}
-              onClick={() => {
-                setSelectedSession(session);
-                setCurrentReplayIndex(session.length - 1);
-                setIsPlaying(false);
-                setDisplayText("");
-              }}
-            >
-              <div className="flex justify-between items-center">
-                <span className="font-medium">{getDomain(session[0].url)}</span>
-                <span className="text-sm text-gray-500">
-                  {new Date(session[0].timestamp).toLocaleString()} -
-                  {new Date(
-                    session[session.length - 1].timestamp
-                  ).toLocaleString()}
-                </span>
+    <div className="p-4">
+      <div className="flex flex-col lg:flex-row gap-4 max-w-[1920px] mx-auto">
+        {/* Left Column - Controls and Timeline */}
+        <div className="w-full lg:w-[600px] space-y-4">
+          {/* Controls */}
+          <div className="bg-white rounded-lg shadow-lg outline outline-gray-300 outline-1 p-4">
+            <h2 className="text-xl font-semibold mb-4">
+              Keylog Viewer Controls
+            </h2>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  className="border rounded p-2"
+                  value={dateRange.start.toISOString().split("T")[0]}
+                  onChange={(e) =>
+                    setDateRange((prev) => ({
+                      ...prev,
+                      start: new Date(e.target.value),
+                    }))
+                  }
+                />
+                <span>to</span>
+                <input
+                  type="date"
+                  className="border rounded p-2"
+                  value={dateRange.end.toISOString().split("T")[0]}
+                  onChange={(e) =>
+                    setDateRange((prev) => ({
+                      ...prev,
+                      end: new Date(e.target.value),
+                    }))
+                  }
+                />
               </div>
 
-              {/* URL Changes Timeline */}
-              <div className="mt-2 text-sm">
-                {(() => {
-                  const urlChanges = [];
-                  let currentUrl = session[0].url;
-                  let currentStartIndex = 0;
+              <select
+                className="border rounded p-2 w-full"
+                value={selectedDomain}
+                onChange={(e) => setSelectedDomain(e.target.value)}
+              >
+                {uniqueDomains.map((domain) => (
+                  <option key={domain} value={domain}>
+                    {domain}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-                  session.forEach((keylog, index) => {
-                    if (keylog.url !== currentUrl) {
+          {/* Sessions Timeline */}
+          <div className="bg-white rounded-lg shadow-lg outline outline-gray-300 outline-1 p-4 h-[calc(100vh-400px)] overflow-y-auto">
+            <h2 className="text-xl font-semibold mb-4">Sessions Timeline</h2>
+            <div className="space-y-2">
+              {sessions.map((session, idx) => (
+                <div
+                  key={idx}
+                  className={`p-3 border rounded cursor-pointer hover:bg-gray-50 transition-colors ${
+                    selectedSession === session
+                      ? "bg-blue-50 border-blue-200"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedSession(session);
+                    setCurrentReplayIndex(session.length - 1);
+                    setIsPlaying(false);
+                    setDisplayText("");
+                  }}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">
+                      {getDomain(session[0].url)}
+                    </span>
+                    <span className="text-sm text-gray-500">
+                      {new Date(session[0].timestamp).toLocaleString()} -
+                      {new Date(
+                        session[session.length - 1].timestamp
+                      ).toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* URL Changes Timeline */}
+                  <div className="mt-2 text-sm">
+                    {(() => {
+                      const urlChanges = [];
+                      let currentUrl = session[0].url;
+                      let currentStartIndex = 0;
+
+                      session.forEach((keylog, index) => {
+                        if (keylog.url !== currentUrl) {
+                          urlChanges.push({
+                            url: currentUrl,
+                            start: session[currentStartIndex].timestamp,
+                            end: keylog.timestamp,
+                            keyCount: index - currentStartIndex,
+                          });
+                          currentUrl = keylog.url;
+                          currentStartIndex = index;
+                        }
+                      });
+
                       urlChanges.push({
                         url: currentUrl,
                         start: session[currentStartIndex].timestamp,
-                        end: keylog.timestamp,
-                        keyCount: index - currentStartIndex,
+                        end: session[session.length - 1].timestamp,
+                        keyCount: session.length - currentStartIndex,
                       });
-                      currentUrl = keylog.url;
-                      currentStartIndex = index;
-                    }
-                  });
 
-                  // Add the last segment
-                  urlChanges.push({
-                    url: currentUrl,
-                    start: session[currentStartIndex].timestamp,
-                    end: session[session.length - 1].timestamp,
-                    keyCount: session.length - currentStartIndex,
-                  });
-
-                  return (
-                    <div className="space-y-1">
-                      {urlChanges.map((change, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full bg-blue-200 flex-shrink-0 relative">
-                            {i < urlChanges.length - 1 && (
-                              <div className="absolute w-0.5 h-full top-4 left-1/2 -translate-x-1/2 bg-blue-200" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <div
-                              className="text-xs font-mono text-gray-600 truncate"
-                              title={change.url}
-                            >
-                              {change.url.replace(/^https?:\/\//, "")}
+                      return (
+                        <div className="space-y-1">
+                          {urlChanges.map((change, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <div className="w-4 h-4 rounded-full bg-blue-200 flex-shrink-0 relative">
+                                {i < urlChanges.length - 1 && (
+                                  <div className="absolute w-0.5 h-full top-4 left-1/2 -translate-x-1/2 bg-blue-200" />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <div
+                                  className="text-xs font-mono text-gray-600 truncate"
+                                  title={change.url}
+                                >
+                                  {change.url.replace(/^https?:\/\//, "")}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {new Date(change.start).toLocaleTimeString()}{" "}
+                                  • {change.keyCount} keystrokes
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-xs text-gray-500">
-                              {new Date(change.start).toLocaleTimeString()} •{" "}
-                              {change.keyCount} keystrokes
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  );
-                })()}
+                      );
+                    })()}
+                  </div>
+
+                  <div className="text-sm text-gray-600 mt-1">
+                    Total: {session.length} keystrokes
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Replay View */}
+        <div className="flex-1 lg:max-h-[calc(100vh-32px)] lg:overflow-y-auto">
+          {selectedSession && (
+            <div className="bg-white rounded-lg shadow-lg outline outline-gray-300 outline-1 p-4 sticky top-0">
+              <h2 className="text-xl font-semibold mb-4">Replay View</h2>
+
+              {/* Raw Database View */}
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">
+                  Raw Database Output:
+                </h3>
+                <div className="bg-gray-50 p-4 rounded font-mono text-sm overflow-x-auto border border-gray-200">
+                  {rawKeystrokes}
+                </div>
               </div>
 
-              <div className="text-sm text-gray-600 mt-1">
-                Total: {session.length} keystrokes
+              {/* Processed Raw View */}
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-500 mb-2">
+                  Processed Output:
+                </h3>
+                <div className="bg-gray-50 p-4 rounded font-mono text-sm overflow-x-auto border border-gray-200">
+                  {processedKeystrokes}
+                </div>
+              </div>
+
+              {/* Replay Controls */}
+              <div className="flex items-center gap-4 mb-4">
+                <button
+                  className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                  onClick={() => {
+                    setIsPlaying(!isPlaying);
+                    if (!isPlaying) setDisplayText("");
+                  }}
+                >
+                  {isPlaying ? "Pause" : "Play"}
+                </button>
+
+                <select
+                  className="border rounded p-2"
+                  value={playbackSpeed}
+                  onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
+                >
+                  <option value="0.5">0.5x</option>
+                  <option value="1">1x</option>
+                  <option value="2">2x</option>
+                  <option value="4">4x</option>
+                </select>
+
+                <div className="text-sm text-gray-500">
+                  {new Date(
+                    selectedSession[currentReplayIndex].timestamp
+                  ).toLocaleString()}
+                </div>
+              </div>
+
+              {/* Replay Display */}
+              <div className="min-h-32 p-4 border rounded bg-white font-mono">
+                {displayText}
               </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
-
-      {/* Replay Area with both raw views */}
-      {selectedSession && (
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-xl font-semibold mb-4">Replay View</h2>
-
-          {/* Raw Database View */}
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-gray-500 mb-2">
-              Raw Database Output:
-            </h3>
-            <div className="bg-gray-50 p-4 rounded font-mono text-sm overflow-x-auto border border-gray-200">
-              {rawKeystrokes}
-            </div>
-          </div>
-
-          {/* Processed Raw View */}
-          <div className="mb-4">
-            <h3 className="text-sm font-semibold text-gray-500 mb-2">
-              Processed Output:
-            </h3>
-            <div className="bg-gray-50 p-4 rounded font-mono text-sm overflow-x-auto border border-gray-200">
-              {processedKeystrokes}
-            </div>
-          </div>
-
-          {/* Replay Controls */}
-          <div className="flex items-center gap-4 mb-4">
-            <button
-              className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-              onClick={() => {
-                setIsPlaying(!isPlaying);
-                if (!isPlaying) setDisplayText("");
-              }}
-            >
-              {isPlaying ? "Pause" : "Play"}
-            </button>
-
-            <select
-              className="border rounded p-2"
-              value={playbackSpeed}
-              onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-            >
-              <option value="0.5">0.5x</option>
-              <option value="1">1x</option>
-              <option value="2">2x</option>
-              <option value="4">4x</option>
-            </select>
-
-            <div className="text-sm text-gray-500">
-              {new Date(
-                selectedSession[currentReplayIndex].timestamp
-              ).toLocaleString()}
-            </div>
-          </div>
-
-          {/* Replay Display */}
-          <div className="min-h-32 p-4 border rounded bg-white font-mono">
-            {displayText}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
