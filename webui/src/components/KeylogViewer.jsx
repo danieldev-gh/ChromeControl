@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 
-// Helper function to group keylogs into sessions
+// Previous helper functions remain the same
+const getDomain = (url) => {
+  try {
+    const urlObj = new URL(url.startsWith("http") ? url : "http://" + url);
+    return urlObj.hostname;
+  } catch (e) {
+    return url;
+  }
+};
+
 const groupIntoSessions = (keylogs, timeThreshold = 60000) => {
   const sessions = [];
   let currentSession = [];
@@ -14,7 +23,10 @@ const groupIntoSessions = (keylogs, timeThreshold = 60000) => {
     const timeDiff =
       keylogs[i].timestamp -
       currentSession[currentSession.length - 1].timestamp;
-    if (timeDiff <= timeThreshold && keylogs[i].url === currentSession[0].url) {
+    const currentDomain = getDomain(currentSession[0].url);
+    const newDomain = getDomain(keylogs[i].url);
+
+    if (timeDiff <= timeThreshold && currentDomain === newDomain) {
       currentSession.push(keylogs[i]);
     } else {
       sessions.push([...currentSession]);
@@ -29,63 +41,110 @@ const groupIntoSessions = (keylogs, timeThreshold = 60000) => {
   return sessions;
 };
 
+const processKeystrokes = (keystrokes) => {
+  const result = [];
+  const chars = keystrokes.split("");
+
+  for (let i = 0; i < chars.length; i++) {
+    if (chars[i] === "[") {
+      let j = i + 1;
+      while (j < chars.length && chars[j] !== "]") j++;
+      const specialKey = keystrokes.slice(i + 1, j);
+      if (specialKey === "Backspace") {
+        result.pop();
+      }
+      i = j;
+    } else {
+      result.push(chars[i]);
+    }
+  }
+
+  return result.join("");
+};
+
 const KeylogViewer = ({ keylogs = [] }) => {
+  // Previous state declarations remain the same
   const [dateRange, setDateRange] = useState({
     start: new Date(Math.min(...keylogs.map((k) => k.timestamp))),
     end: new Date(Math.max(...keylogs.map((k) => k.timestamp))),
   });
-  const [selectedUrl, setSelectedUrl] = useState("all");
+  const [selectedDomain, setSelectedDomain] = useState("all");
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [currentReplayIndex, setCurrentReplayIndex] = useState(0);
   const [selectedSession, setSelectedSession] = useState(null);
+  const [displayText, setDisplayText] = useState("");
 
-  // Filter and process keylogs based on date range and URL
+  // Previous useMemo hooks remain the same
   const filteredKeylogs = useMemo(() => {
     return keylogs.filter((keylog) => {
       const timestamp = new Date(keylog.timestamp);
       const isInDateRange =
         timestamp >= dateRange.start && timestamp <= dateRange.end;
-      const isMatchingUrl = selectedUrl === "all" || keylog.url === selectedUrl;
-      return isInDateRange && isMatchingUrl;
+      const isMatchingDomain =
+        selectedDomain === "all" || getDomain(keylog.url) === selectedDomain;
+      return isInDateRange && isMatchingDomain;
     });
-  }, [keylogs, dateRange, selectedUrl]);
+  }, [keylogs, dateRange, selectedDomain]);
 
-  // Group filtered keylogs into sessions
   const sessions = useMemo(() => {
     return groupIntoSessions(filteredKeylogs);
   }, [filteredKeylogs]);
 
-  // Get unique URLs for filter dropdown
-  const uniqueUrls = useMemo(() => {
-    return ["all", ...new Set(keylogs.map((k) => k.url))];
+  const uniqueDomains = useMemo(() => {
+    return ["all", ...new Set(keylogs.map((k) => getDomain(k.url)))];
   }, [keylogs]);
 
-  // Handle playback
+  // Playback effect remains the same
   useEffect(() => {
-    let playbackInterval;
+    let animationInterval;
     if (isPlaying && selectedSession) {
-      playbackInterval = setInterval(() => {
-        setCurrentReplayIndex((prev) => {
-          if (prev >= selectedSession.length - 1) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, 100 / playbackSpeed);
-    }
-    return () => clearInterval(playbackInterval);
-  }, [isPlaying, selectedSession, playbackSpeed]);
+      let currentText = "";
+      let charIndex = 0;
+      const allKeystrokes = selectedSession
+        .slice(0, currentReplayIndex + 1)
+        .map((k) => k.keystrokes)
+        .join("");
 
-  // Get concatenated keystrokes for selected session
-  const concatenatedKeystrokes = selectedSession
+      animationInterval = setInterval(() => {
+        if (charIndex >= allKeystrokes.length) {
+          setIsPlaying(false);
+          return;
+        }
+
+        if (allKeystrokes[charIndex] === "[") {
+          let j = charIndex + 1;
+          while (j < allKeystrokes.length && allKeystrokes[j] !== "]") j++;
+          const specialKey = allKeystrokes.slice(charIndex + 1, j);
+
+          if (specialKey === "Backspace") {
+            currentText = currentText.slice(0, -1);
+          }
+          charIndex = j + 1;
+        } else {
+          currentText += allKeystrokes[charIndex];
+          charIndex++;
+        }
+
+        setDisplayText(currentText);
+      }, 50 / playbackSpeed);
+    }
+    return () => clearInterval(animationInterval);
+  }, [isPlaying, selectedSession, currentReplayIndex, playbackSpeed]);
+
+  // Get both raw and processed keystrokes
+  const rawKeystrokes = selectedSession
     ? selectedSession.map((k) => k.keystrokes).join("")
     : "";
 
+  const processedKeystrokes = selectedSession
+    ? selectedSession.map((k) => processKeystrokes(k.keystrokes)).join("")
+    : "";
+
+  // Rest of the component remains similar, just adding new raw view
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-4">
-      {/* Controls */}
+      {/* Controls section remains the same */}
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-xl font-semibold mb-4">Keylog Viewer Controls</h2>
         <div className="flex flex-wrap gap-4">
@@ -117,18 +176,19 @@ const KeylogViewer = ({ keylogs = [] }) => {
 
           <select
             className="border rounded p-2"
-            value={selectedUrl}
-            onChange={(e) => setSelectedUrl(e.target.value)}
+            value={selectedDomain}
+            onChange={(e) => setSelectedDomain(e.target.value)}
           >
-            {uniqueUrls.map((url) => (
-              <option key={url} value={url}>
-                {url}
+            {uniqueDomains.map((domain) => (
+              <option key={domain} value={domain}>
+                {domain}
               </option>
             ))}
           </select>
         </div>
       </div>
 
+      {/* Sessions Timeline remains the same */}
       {/* Sessions Timeline */}
       <div className="bg-white rounded-lg shadow p-4">
         <h2 className="text-xl font-semibold mb-4">Sessions Timeline</h2>
@@ -141,12 +201,13 @@ const KeylogViewer = ({ keylogs = [] }) => {
               }`}
               onClick={() => {
                 setSelectedSession(session);
-                setCurrentReplayIndex(0);
+                setCurrentReplayIndex(session.length - 1);
                 setIsPlaying(false);
+                setDisplayText("");
               }}
             >
               <div className="flex justify-between items-center">
-                <span className="font-medium">{session[0].url}</span>
+                <span className="font-medium">{getDomain(session[0].url)}</span>
                 <span className="text-sm text-gray-500">
                   {new Date(session[0].timestamp).toLocaleString()} -
                   {new Date(
@@ -154,29 +215,104 @@ const KeylogViewer = ({ keylogs = [] }) => {
                   ).toLocaleString()}
                 </span>
               </div>
+
+              {/* URL Changes Timeline */}
+              <div className="mt-2 text-sm">
+                {(() => {
+                  const urlChanges = [];
+                  let currentUrl = session[0].url;
+                  let currentStartIndex = 0;
+
+                  session.forEach((keylog, index) => {
+                    if (keylog.url !== currentUrl) {
+                      urlChanges.push({
+                        url: currentUrl,
+                        start: session[currentStartIndex].timestamp,
+                        end: keylog.timestamp,
+                        keyCount: index - currentStartIndex,
+                      });
+                      currentUrl = keylog.url;
+                      currentStartIndex = index;
+                    }
+                  });
+
+                  // Add the last segment
+                  urlChanges.push({
+                    url: currentUrl,
+                    start: session[currentStartIndex].timestamp,
+                    end: session[session.length - 1].timestamp,
+                    keyCount: session.length - currentStartIndex,
+                  });
+
+                  return (
+                    <div className="space-y-1">
+                      {urlChanges.map((change, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full bg-blue-200 flex-shrink-0 relative">
+                            {i < urlChanges.length - 1 && (
+                              <div className="absolute w-0.5 h-full top-4 left-1/2 -translate-x-1/2 bg-blue-200" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div
+                              className="text-xs font-mono text-gray-600 truncate"
+                              title={change.url}
+                            >
+                              {change.url.replace(/^https?:\/\//, "")}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {new Date(change.start).toLocaleTimeString()} •{" "}
+                              {change.keyCount} keystrokes
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+
               <div className="text-sm text-gray-600 mt-1">
-                {session.length} keystrokes
+                Total: {session.length} keystrokes
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Replay Area */}
+      {/* Replay Area with both raw views */}
       {selectedSession && (
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-xl font-semibold mb-4">Replay View</h2>
 
-          {/* Raw Data */}
-          <div className="bg-gray-50 p-4 rounded font-mono text-sm overflow-x-auto mb-4">
-            {concatenatedKeystrokes}
+          {/* Raw Database View */}
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-500 mb-2">
+              Raw Database Output:
+            </h3>
+            <div className="bg-gray-50 p-4 rounded font-mono text-sm overflow-x-auto border border-gray-200">
+              {rawKeystrokes}
+            </div>
+          </div>
+
+          {/* Processed Raw View */}
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-500 mb-2">
+              Processed Output:
+            </h3>
+            <div className="bg-gray-50 p-4 rounded font-mono text-sm overflow-x-auto border border-gray-200">
+              {processedKeystrokes}
+            </div>
           </div>
 
           {/* Replay Controls */}
           <div className="flex items-center gap-4 mb-4">
             <button
               className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={() => {
+                setIsPlaying(!isPlaying);
+                if (!isPlaying) setDisplayText("");
+              }}
             >
               {isPlaying ? "Pause" : "Play"}
             </button>
@@ -201,10 +337,7 @@ const KeylogViewer = ({ keylogs = [] }) => {
 
           {/* Replay Display */}
           <div className="min-h-32 p-4 border rounded bg-white font-mono">
-            {selectedSession
-              .slice(0, currentReplayIndex + 1)
-              .map((k) => k.keystrokes)
-              .join("")}
+            {displayText}
           </div>
         </div>
       )}
