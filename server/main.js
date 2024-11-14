@@ -11,7 +11,7 @@ const serverClients = http.createServer(appClients);
 const serverWebUI = http.createServer(appWebUI);
 
 initializeClientApi(appClients, serverClients);
-initializeWebUiApi(appWebUI);
+initializeWebUiApi(appWebUI, serverWebUI);
 
 const PORT_CLIENTS = process.env.PORT_CLIENTS || 3000;
 const PORT_WEBUI = process.env.PORT_WEBUI || 3001;

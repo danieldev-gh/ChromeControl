@@ -2,14 +2,15 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const db = require("./db"); // Adjust the path as necessary
-const { socketMaps } = require("./sharedData");
-
+const { socketMaps, eventListener } = require("./sharedData");
+const { Server } = require("socket.io");
 // add jsdoc
 /**
  *
  * @param {express.Express} appWebUI
  */
-module.exports = function initializeWebUiApi(appWebUI) {
+module.exports = function initializeWebUiApi(appWebUI, server) {
+  const io = new Server(server);
   appWebUI.use(express.json());
   appWebUI.use(express.urlencoded({ extended: true }));
   appWebUI.use(express.static(path.join(__dirname, "../webui/dist")));
@@ -93,4 +94,7 @@ module.exports = function initializeWebUiApi(appWebUI) {
   appWebUI.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "../webui/dist", "index.html"));
   });
+  eventListener.listener = (event, client_id) => {
+    io.emit("event", { event, client_id });
+  };
 };
