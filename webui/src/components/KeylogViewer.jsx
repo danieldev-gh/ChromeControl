@@ -71,6 +71,7 @@ const KeylogViewer = ({ keylogs = [] }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [currentReplayIndex, setCurrentReplayIndex] = useState(0);
+  const [currentCharIndex, setCurrentCharIndex] = useState(0);
   const [selectedSessionTS, setSelectedSessionTS] = useState(null);
   const [displayText, setDisplayText] = useState("");
   const [sortOrder, setSortOrder] = useState("recent"); // 'recent' or 'oldest'
@@ -114,14 +115,18 @@ const KeylogViewer = ({ keylogs = [] }) => {
   useEffect(() => {
     let animationInterval;
     if (isPlaying && selectedSession) {
-      let currentText = "";
-      let charIndex = 0;
-      const allKeystrokes = selectedSession
-        .slice(0, currentReplayIndex + 1)
-        .map((k) => k.keystrokes)
-        .join("");
-
+      let currentText = displayText;
+      let charIndex = currentCharIndex;
+      if (
+        displayText.length >=
+        selectedSession.map((k) => k.keystrokes).join("").length
+      ) {
+        currentText = "";
+        setCurrentCharIndex(0);
+        charIndex = 0;
+      }
       animationInterval = setInterval(() => {
+        const allKeystrokes = selectedSession.map((k) => k.keystrokes).join("");
         if (charIndex >= allKeystrokes.length) {
           setIsPlaying(false);
           return;
@@ -140,7 +145,7 @@ const KeylogViewer = ({ keylogs = [] }) => {
           currentText += allKeystrokes[charIndex];
           charIndex++;
         }
-
+        setCurrentCharIndex(charIndex);
         setDisplayText(currentText);
       }, 50 / playbackSpeed);
     }
@@ -192,7 +197,7 @@ const KeylogViewer = ({ keylogs = [] }) => {
                   }
                   placeholder="Now"
                   onChange={(e) => {
-                    selectedSessionTS(null);
+                    setSelectedSessionTS(null);
                     setDateRange((prev) => ({
                       ...prev,
                       end: e.target.value ? new Date(e.target.value) : null,
@@ -213,7 +218,7 @@ const KeylogViewer = ({ keylogs = [] }) => {
                 className="border rounded p-2 w-full"
                 value={selectedDomain}
                 onChange={(e) => {
-                  selectedSessionTS(null);
+                  setSelectedSessionTS(null);
                   setSelectedDomain(e.target.value);
                 }}
               >
@@ -241,6 +246,7 @@ const KeylogViewer = ({ keylogs = [] }) => {
                   onClick={() => {
                     setSelectedSessionTS(session[0].timestamp);
                     setCurrentReplayIndex(session.length - 1);
+                    setCurrentCharIndex(0);
                     setIsPlaying(false);
                     setDisplayText("");
                   }}
@@ -353,12 +359,27 @@ const KeylogViewer = ({ keylogs = [] }) => {
                   className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors"
                   onClick={() => {
                     setIsPlaying(!isPlaying);
-                    if (!isPlaying) setDisplayText("");
                   }}
                 >
-                  {isPlaying ? "Pause" : "Play"}
+                  {isPlaying
+                    ? "Pause"
+                    : currentCharIndex === 0
+                    ? "Play"
+                    : currentCharIndex >=
+                      selectedSession.map((k) => k.keystrokes).join("").length
+                    ? "Replay"
+                    : "Resume"}
                 </button>
-
+                <button
+                  className="px-4 py-2 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                  onClick={() => {
+                    setIsPlaying(false);
+                    setDisplayText("");
+                    setCurrentCharIndex(0);
+                  }}
+                >
+                  Reset
+                </button>
                 <select
                   className="border rounded p-2"
                   value={playbackSpeed}
