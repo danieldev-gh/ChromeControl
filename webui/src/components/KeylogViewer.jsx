@@ -61,40 +61,55 @@ const processKeystrokes = (keystrokes) => {
 
   return result.join("");
 };
-
 const KeylogViewer = ({ keylogs = [] }) => {
   // Previous state declarations remain the same
   const [dateRange, setDateRange] = useState({
     start: new Date(Math.min(...keylogs.map((k) => k.timestamp))),
-    end: new Date(Math.max(...keylogs.map((k) => k.timestamp))),
+    end: null, // null means "now" - will show all entries up to present
   });
   const [selectedDomain, setSelectedDomain] = useState("all");
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [currentReplayIndex, setCurrentReplayIndex] = useState(0);
-  const [selectedSession, setSelectedSession] = useState(null);
+  const [selectedSessionTS, setSelectedSessionTS] = useState(null);
   const [displayText, setDisplayText] = useState("");
+  const [sortOrder, setSortOrder] = useState("recent"); // 'recent' or 'oldest'
 
   // Previous useMemo hooks remain the same
   const filteredKeylogs = useMemo(() => {
     return keylogs.filter((keylog) => {
       const timestamp = new Date(keylog.timestamp);
-      const isInDateRange =
-        timestamp >= dateRange.start && timestamp <= dateRange.end;
+      const isAfterStart = timestamp >= dateRange.start;
+      const isBeforeEnd = dateRange.end ? timestamp <= dateRange.end : true;
       const isMatchingDomain =
         selectedDomain === "all" || getDomain(keylog.url) === selectedDomain;
-      return isInDateRange && isMatchingDomain;
+      return isAfterStart && isBeforeEnd && isMatchingDomain;
     });
   }, [keylogs, dateRange, selectedDomain]);
 
   const sessions = useMemo(() => {
-    return groupIntoSessions(filteredKeylogs);
-  }, [filteredKeylogs]);
+    const groupedSessions = groupIntoSessions(filteredKeylogs);
+    return groupedSessions.sort((a, b) => {
+      const aTime = a[0].timestamp;
+      const bTime = b[0].timestamp;
+      return sortOrder === "recent" ? bTime - aTime : aTime - bTime;
+    });
+  }, [filteredKeylogs, sortOrder]);
+  function getSessionByTimestamp(sessions, timestamp) {
+    return sessions.find((session) => {
+      return session[0].timestamp === timestamp;
+    });
+  }
 
   const uniqueDomains = useMemo(() => {
     return ["all", ...new Set(keylogs.map((k) => getDomain(k.url)))];
   }, [keylogs]);
 
+  const selectedSession = useMemo(() => {
+    return selectedSessionTS !== null
+      ? getSessionByTimestamp(sessions, selectedSessionTS)
+      : null;
+  }, [selectedSessionTS, sessions]);
   // Playback effect remains the same
   useEffect(() => {
     let animationInterval;
@@ -158,31 +173,49 @@ const KeylogViewer = ({ keylogs = [] }) => {
                   type="date"
                   className="border rounded p-2"
                   value={dateRange.start.toISOString().split("T")[0]}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    setSelectedSessionTS(null);
                     setDateRange((prev) => ({
                       ...prev,
                       start: new Date(e.target.value),
-                    }))
-                  }
+                    }));
+                  }}
                 />
                 <span>to</span>
                 <input
                   type="date"
                   className="border rounded p-2"
-                  value={dateRange.end.toISOString().split("T")[0]}
-                  onChange={(e) =>
+                  value={
+                    dateRange.end
+                      ? dateRange.end.toISOString().split("T")[0]
+                      : ""
+                  }
+                  placeholder="Now"
+                  onChange={(e) => {
+                    selectedSessionTS(null);
                     setDateRange((prev) => ({
                       ...prev,
-                      end: new Date(e.target.value),
-                    }))
-                  }
+                      end: e.target.value ? new Date(e.target.value) : null,
+                    }));
+                  }}
                 />
+                <select
+                  className="border rounded p-2"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                >
+                  <option value="recent">Most Recent</option>
+                  <option value="oldest">Oldest First</option>
+                </select>
               </div>
 
               <select
                 className="border rounded p-2 w-full"
                 value={selectedDomain}
-                onChange={(e) => setSelectedDomain(e.target.value)}
+                onChange={(e) => {
+                  selectedSessionTS(null);
+                  setSelectedDomain(e.target.value);
+                }}
               >
                 {uniqueDomains.map((domain) => (
                   <option key={domain} value={domain}>
@@ -201,12 +234,12 @@ const KeylogViewer = ({ keylogs = [] }) => {
                 <div
                   key={idx}
                   className={`p-3 border rounded cursor-pointer hover:bg-gray-50 transition-colors ${
-                    selectedSession === session
+                    selectedSessionTS === session[0].timestamp
                       ? "bg-blue-50 border-blue-200"
                       : ""
                   }`}
                   onClick={() => {
-                    setSelectedSession(session);
+                    setSelectedSessionTS(session[0].timestamp);
                     setCurrentReplayIndex(session.length - 1);
                     setIsPlaying(false);
                     setDisplayText("");
@@ -331,6 +364,7 @@ const KeylogViewer = ({ keylogs = [] }) => {
                   value={playbackSpeed}
                   onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
                 >
+                  <option value="0.25">0.25x</option>
                   <option value="0.5">0.5x</option>
                   <option value="1">1x</option>
                   <option value="2">2x</option>
@@ -345,7 +379,7 @@ const KeylogViewer = ({ keylogs = [] }) => {
               </div>
 
               {/* Replay Display */}
-              <div className="min-h-32 p-4 border rounded bg-white font-mono">
+              <div className="min-h-32 p-4 border rounded bg-white font-mono whitespace-pre-wrap break-words">
                 {displayText}
               </div>
             </div>

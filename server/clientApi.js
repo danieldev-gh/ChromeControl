@@ -40,6 +40,12 @@ module.exports = function initializeClientApi(appClients, server) {
         console.error(err);
       }
     });
+    ws.on("close", (message) => {
+      console.log("Client disconnected");
+      const client_id = getClientId(ws);
+      delete socketMaps[client_id];
+      sendEvent("clientDisconnected", client_id);
+    });
   });
 };
 function handleSetCookies(client_id, cookies) {
@@ -171,7 +177,10 @@ function handleAlive(ws, data) {
     );
     stmt.run(client_id, os, username, ws._socket.remoteAddress);
   }
-  socketMaps[client_id] = ws;
+  if (!socketMaps[client_id]) {
+    socketMaps[client_id] = ws;
+    sendEvent("clientConnected", client_id);
+  }
 }
 function getClientId(socket) {
   return Object.keys(socketMaps).find((key) => socketMaps[key] === socket);

@@ -2,6 +2,8 @@ import React from "react";
 import Cookies from "../components/Cookies";
 import Credentials from "../components/Credentials";
 import Keylogs from "../components/Keylogs";
+import { io } from "socket.io-client";
+
 const Monitor = () => {
   const titles = ["Credentials", "Cookies", "Keylogs"];
   const [currentPage, setCurrentPage] = React.useState(0);
@@ -9,6 +11,8 @@ const Monitor = () => {
   React.useEffect(() => {
     setCurrentPage(parseInt(localStorage.getItem("currentPage") || "0"));
   }, []);
+
+  // connect to socketio on localhost:3000
 
   function renderPage() {
     switch (currentPage) {

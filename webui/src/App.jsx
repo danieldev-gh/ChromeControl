@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Monitor from "./pages/Monitor";
 import React from "react";
 import NotFound from "./pages/NotFound"; // Import your 404 page component
+import socket from "./socket";
 export const GlobalContext = React.createContext(null);
 function App() {
   const [selectedClientId, setSelectedClientId] = React.useState(null);
@@ -13,9 +14,29 @@ function App() {
     fetch("http://localhost:3001/clients")
       .then((res) => res.json())
       .then((data) => {
-        setClients(data), setSelectedClientId(data[0].client_id);
+        setClients(data), setSelectedClientId(data[0]?.client_id);
       })
       .catch((err) => console.error(err));
+  }, []);
+
+  React.useEffect(() => {
+    function onEvent(event) {
+      if (
+        event.event === "clientDisconnected" ||
+        event.event === "clientConnected"
+      ) {
+        fetch("http://localhost:3001/clients")
+          .then((res) => res.json())
+          .then((data) => {
+            setClients(data), setSelectedClientId(data[0]?.client_id);
+          })
+          .catch((err) => console.error(err));
+      }
+    }
+    socket.on("event", onEvent);
+    return () => {
+      socket.off("event", onEvent);
+    };
   }, []);
   return (
     <div className="w-full max-h-full h-full flex flex-col">

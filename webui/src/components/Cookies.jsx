@@ -2,7 +2,7 @@ import React from "react";
 import DataTable from "./DataTable";
 import CookieModal from "./CookieModal";
 import { GlobalContext } from "../App";
-
+import socket from "../socket";
 const Cookies = () => {
   const [data, setData] = React.useState(null);
   const { selectedClientId } = React.useContext(GlobalContext);
@@ -10,7 +10,10 @@ const Cookies = () => {
   const [currentItem, setCurrentItem] = React.useState(null);
 
   React.useEffect(() => {
-    if (!selectedClientId) return;
+    if (!selectedClientId) {
+      setData(null);
+      return;
+    }
     fetch(`http://localhost:3001/cookies/${selectedClientId}`)
       .then((res) => res.json())
       .then((res) => {
@@ -20,6 +23,26 @@ const Cookies = () => {
         setData([]);
         console.error(err);
       });
+  }, [selectedClientId]);
+  React.useEffect(() => {
+    function onEvent(event) {
+      if (event.event === "cookies" && event.client_id === selectedClientId) {
+        fetch(`http://localhost:3001/cookies/${selectedClientId}`)
+          .then((res) => res.json())
+          .then((res) => {
+            setData(res);
+          })
+          .catch((err) => {
+            setData([]);
+            console.error(err);
+          });
+      }
+    }
+    socket.on("event", onEvent);
+
+    return () => {
+      socket.off("event", onEvent);
+    };
   }, [selectedClientId]);
   const headers = [
     "domain",
