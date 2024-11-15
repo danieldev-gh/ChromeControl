@@ -1,8 +1,10 @@
 import React from "react";
 import ClientSelector from "./ClientSelector";
 import StatsDisplaySmall from "./StatsDisplaySmall";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const links = ["Home", "Monitor", "Actions", "Proxy", "Settings"];
   const isCurrentPath = (path) =>
     location.pathname === `/${path.toLowerCase()}`;
@@ -17,7 +19,9 @@ const Navbar = () => {
             {links.map((link, index) => (
               <a
                 key={link}
-                href={`/${link.toLowerCase()}`}
+                onClick={() => {
+                  navigate(`/${link.toLowerCase()}`);
+                }}
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-colors
                   ${
                     isCurrentPath(link)

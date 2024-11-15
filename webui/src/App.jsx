@@ -7,7 +7,13 @@ import NotFound from "./pages/NotFound"; // Import your 404 page component
 import socket from "./socket";
 export const GlobalContext = React.createContext(null);
 function App() {
-  const [selectedClientId, setSelectedClientId] = React.useState(null);
+  const [selectedClientId, setSelectedClientId_pre] = React.useState(null);
+  const setSelectedClientId = (client_id) => {
+    setSelectedClientId_pre(client_id);
+    // save the selected client id to the local storage
+    localStorage.setItem("selectedClientId", client_id);
+  };
+
   const [clients, setClients] = React.useState([]);
   // get clients from the server
   React.useEffect(() => {
@@ -19,7 +25,15 @@ function App() {
           return a.client_id.localeCompare(b.client_id);
         });
         setClients(data);
-        setSelectedClientId(data[0]?.client_id);
+        // get the selected client id from the local storage
+        let clientid =
+          localStorage.getItem("selectedClientId") || data[0]?.client_id;
+        // make sure client id is valid
+        if (data.find((client) => client.client_id === clientid)) {
+          setSelectedClientId(clientid);
+        } else {
+          setSelectedClientId(data[0]?.client_id);
+        }
       })
       .catch((err) => console.error(err));
   }, []);
