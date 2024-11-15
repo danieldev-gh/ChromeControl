@@ -64,9 +64,27 @@ const processKeystrokes = (keystrokes) => {
 const KeylogViewer = ({ keylogs = [] }) => {
   // Previous state declarations remain the same
   const [dateRange, setDateRange] = useState({
-    start: new Date(Math.min(...keylogs.map((k) => k.timestamp))),
+    start: new Date(
+      Math.min(
+        ...(keylogs.length > 0 ? keylogs : [{ timestamp: 0 }]).map(
+          (k) => k.timestamp
+        )
+      )
+    ),
     end: null, // null means "now" - will show all entries up to present
   });
+  useEffect(() => {
+    setDateRange((prev) => ({
+      ...prev,
+      start: new Date(
+        Math.min(
+          ...(keylogs.length > 0 ? keylogs : [{ timestamp: 0 }]).map(
+            (k) => k.timestamp
+          )
+        )
+      ),
+    }));
+  }, [keylogs]);
   const [selectedDomain, setSelectedDomain] = useState("all");
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);

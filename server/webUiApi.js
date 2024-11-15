@@ -27,12 +27,15 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
     const onlineClients = Object.keys(socketMaps);
     const stmt = db.prepare(
       `
-      SELECT * FROM clients WHERE client_id IN (${onlineClients
-        .map(() => "?")
-        .join(",")})
+      SELECT * FROM clients
       `
     );
-    const clients = stmt.all(...onlineClients);
+    const clients = stmt.all();
+    // add online property to each client with an id in onlineClients
+    clients.forEach((client) => {
+      client.online = onlineClients.includes(client.client_id);
+    });
+
     res.json(clients);
   });
   appWebUI.post("/alert", (req, res) => {
