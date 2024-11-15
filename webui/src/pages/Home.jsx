@@ -6,9 +6,9 @@ const Home = () => {
   const { selectedClientId } = React.useContext(GlobalContext);
   const [message, setMessage] = React.useState("");
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col p-2">
       Home
-      <div>
+      <div className="mt-2">
         <input
           type="text"
           placeholder="message"
@@ -39,7 +39,7 @@ const Home = () => {
           Alert
         </button>
       </div>
-      <ClientSelector className="w-10" />
+      <ClientSelector className="w-[20vw] mt-2" />
     </div>
   );
 };
