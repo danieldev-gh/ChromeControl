@@ -28,13 +28,20 @@ const Monitor = () => {
   }
   return (
     <div className="flex flex-grow flex-col">
-      <div className="w-full h-12 flex flex-row">
+      <div className="flex border-b border-blue-600">
         {titles.map((title, index) => (
           <div
             key={index}
-            className={`bg-blue-500 hover:brightness-125 transition-all flex-1 text-center text-white font-bold py-3 cursor-pointer ${
-              index !== 2 ? "border-r border-white" : ""
-            } ${currentPage === index ? "bg-blue-700" : ""}`}
+            className={`
+        flex-1 py-3 px-4 text-center font-medium text-sm
+        transition-colors cursor-pointer
+        ${
+          currentPage === index
+            ? "bg-blue-600 text-white"
+            : "bg-blue-500 text-blue-50 hover:bg-blue-550"
+        }
+        ${index !== titles.length - 1 ? "border-r border-blue-400" : ""}
+      `}
             onClick={() => {
               setCurrentPage(index);
               localStorage.setItem("currentPage", index);

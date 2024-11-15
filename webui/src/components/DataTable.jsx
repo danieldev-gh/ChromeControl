@@ -13,18 +13,18 @@ const DataTable = ({
   return (
     <div className="flex flex-grow flex-col">
       {/* Header row */}
-      <div className="flex flex-row overflow-y-scroll">
+      <div className="flex flex-row overflow-y-scroll border-t border-l border-gray-200">
         {headers.map((header, index) => (
           <div
             key={index}
             style={{ flex: weights[index] }}
-            className={`text-center font-bold py-2 border-b border-r border-black min-w-0`}
+            className={`py-3  text-sm font-semibold text-gray-700 border-b border-r border-gray-200 bg-gray-50`}
           >
-            {header}
+            <div className="ml-4">{header}</div>
           </div>
         ))}
       </div>
-      <div className="flex flex-col flex-grow h-1 overflow-y-scroll">
+      <div className="flex flex-col flex-grow h-1 overflow-y-scroll border-l border-gray-200">
         {/* Data rows */}
         {data &&
           data.map((row, rowIndex) => (
@@ -33,21 +33,23 @@ const DataTable = ({
               onClick={() => {
                 onItemClick(row);
               }}
-              className="flex flex-row h-10 hover:bg-blue-300 transition-all cursor-pointer"
+              className="flex h-10 hover:bg-blue-50 transition-colors cursor-pointer"
             >
               {Object.values(row).map((value, colIndex) => (
                 <div
                   key={colIndex}
                   style={{ flex: weights[colIndex] }}
-                  className={`text-center py-2 border-b border-r border-black min-w-0 overflow-hidden text-ellipsis relative`}
+                  className={`relative flex items-center py-2 text-sm text-gray-600 border-b border-r border-gray-200 min-w-0`}
                 >
-                  {value}
+                  <span className="ml-4 truncate">{value}</span>
+
                   {copyBtnColumns.includes(colIndex) && (
                     <div className="absolute right-0 top-0 p-1 flex flex-row">
                       <button
-                        className="bg-blue-500 text-white text-sm px-2 py-1 rounded-md hover:brightness-110 transition-all hover:scale-105"
-                        onClick={() => {
-                          copyToClipboard(value);
+                        className="ml-auto p-1 text-xs text-blue-600 bg-white hover:text-blue-800 hover:bg-blue-100 rounded transition-colors "
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyToClipboard(String(value));
                         }}
                       >
                         Copy

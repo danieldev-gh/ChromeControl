@@ -1,35 +1,40 @@
 import React from "react";
 import ClientSelector from "./ClientSelector";
 import StatsDisplaySmall from "./StatsDisplaySmall";
+
 const Navbar = () => {
   const links = ["Home", "Monitor", "Actions", "Proxy", "Settings"];
+  const isCurrentPath = (path) =>
+    location.pathname === `/${path.toLowerCase()}`;
+
   return (
-    <nav className="bg-blue-900 p-2 px-4">
-      <div className="flex items-center justify-between h-16">
-        <div className="flex-shrink-0">
-          <img className="w-12 h-12" src="/icon.png"></img>
-        </div>
-        <div className="flex justify-center ">
-          {links.map((link, index) => (
-            <div key={index}>
+    <nav className="bg-gradient-to-r from-blue-900 to-blue-700 shadow-lg">
+      <div className="max-w-7xl mx-auto px-4 flex items-center h-16 justify-between">
+        <div className="flex items-center gap-8">
+          <img className="w-10 h-10" src="/icon.png" alt="Logo" />
+
+          <div className="flex items-center space-x-1">
+            {links.map((link, index) => (
               <a
+                key={link}
                 href={`/${link.toLowerCase()}`}
-                className={`px-3 text-white text-lg font-medium ${
-                  location.pathname === `/${link.toLowerCase()}`
-                    ? "underline"
-                    : ""
-                }`}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors
+                  ${
+                    isCurrentPath(link)
+                      ? "text-white bg-blue-700/50"
+                      : "text-blue-100 hover:text-white hover:bg-blue-700/30"
+                  }`}
               >
                 {link}
               </a>
-              {index !== links.length - 1 && (
-                <span className="text-white mx-2">|</span>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-        <ClientSelector className="w-52 h-8" />
-        <StatsDisplaySmall />
+
+        <div className="flex items-center gap-4">
+          <ClientSelector className="w-52" />
+          <StatsDisplaySmall />
+        </div>
       </div>
     </nav>
   );

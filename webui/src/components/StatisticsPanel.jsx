@@ -2,7 +2,7 @@ import React from "react";
 import { Clock, Key, Cookie, Keyboard, BarChart3 } from "lucide-react";
 
 const StatisticItem = ({ icon: Icon, label, value, className = "" }) => (
-  <div className={`flex items-center p-3 rounded-lg bg-gray-50 ${className}`}>
+  <div className={`flex items-center p-3 rounded-lg bg-gray-100 ${className}`}>
     <Icon className="h-5 w-5 text-blue-600 mr-3" />
     <div>
       <p className="text-sm text-gray-500">{label}</p>

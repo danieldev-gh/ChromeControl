@@ -1,26 +1,38 @@
 import React from "react";
 import JsonView from "@uiw/react-json-view";
-import { darkTheme } from "@uiw/react-json-view/dark";
+import { lightTheme } from "@uiw/react-json-view/light";
 
 const JsonModal = ({ show, setShow, item }) => {
+  if (!show) return null;
+
   return (
-    <div
-      className={`${
-        show ? "fixed" : "hidden"
-      } top-0 left-0 w-screen h-screen flex items-center justify-center backdrop-blur-sm z-20`}
-    >
-      <div className="w-1/3 h-1/3 rounded-md bg-blue-700 z-10 flex flex-col">
-        <JsonView
-          value={item ? JSON.parse(item.data) : {}}
-          style={darkTheme}
-          className="m-2 rounded-md flex-grow"
-        />
-        <div className="w-full text-center">
-          <button
-            className="bg-white text-black text-sm px-2 py-1 rounded-md hover:brightness-110 transition-all mx-auto mb-2"
-            onClick={() => {
-              setShow(false);
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl flex flex-col max-h-[80vh]">
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold text-gray-900">JSON View</h2>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 bg-gray-50">
+          <JsonView
+            value={item ? JSON.parse(item.data) : {}}
+            style={{
+              ...lightTheme,
+              container: {
+                ...lightTheme.container,
+                backgroundColor: "transparent",
+                borderRadius: "0.375rem",
+                padding: "0.5rem",
+              },
             }}
+            displayDataTypes={false}
+            displayObjectSize={false}
+          />
+        </div>
+
+        <div className="p-4 border-t bg-white rounded-b-lg flex justify-end">
+          <button
+            onClick={() => setShow(false)}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
           >
             Close
           </button>

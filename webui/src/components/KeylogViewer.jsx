@@ -250,9 +250,9 @@ const KeylogViewer = ({ keylogs = [] }) => {
           </div>
 
           {/* Sessions Timeline */}
-          <div className="bg-white rounded-lg shadow-lg outline outline-gray-300 outline-1 p-4 h-[calc(100vh-400px)] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-lg outline outline-gray-300 outline-1 p-4 h-[calc(100vh-400px)]">
             <h2 className="text-xl font-semibold mb-4">Sessions Timeline</h2>
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-y-auto h-[calc(100%-3rem)]">
               {sessions.map((session, idx) => (
                 <div
                   key={idx}
@@ -317,9 +317,9 @@ const KeylogViewer = ({ keylogs = [] }) => {
                                   <div className="absolute w-0.5 h-full top-4 left-1/2 -translate-x-1/2 bg-blue-200" />
                                 )}
                               </div>
-                              <div className="flex-1">
+                              <div className="flex-1 min-w-0">
                                 <div
-                                  className="text-xs font-mono text-gray-600 truncate"
+                                  className="text-xs font-mono text-gray-600 truncate block"
                                   title={change.url}
                                 >
                                   {change.url.replace(/^https?:\/\//, "")}
@@ -346,9 +346,9 @@ const KeylogViewer = ({ keylogs = [] }) => {
         </div>
 
         {/* Right Column - Replay View */}
-        <div className="flex-1 lg:max-h-[calc(100vh-32px)] lg:overflow-y-auto">
+        <div className="flex-1 lg:max-h-[calc(100vh-32px)] lg:overflow-y-auto rounded-lg shadow-lg outline outline-gray-300 outline-1">
           {selectedSession && (
-            <div className="bg-white rounded-lg shadow-lg outline outline-gray-300 outline-1 p-4 sticky top-0">
+            <div className="bg-white  p-4 sticky top-0">
               <h2 className="text-xl font-semibold mb-4">Replay View</h2>
 
               {/* Raw Database View */}
@@ -420,6 +420,16 @@ const KeylogViewer = ({ keylogs = [] }) => {
               {/* Replay Display */}
               <div className="min-h-32 p-4 border rounded bg-white font-mono whitespace-pre-wrap break-words">
                 {displayText}
+              </div>
+            </div>
+          )}
+          {!selectedSession && (
+            <div className="w-full h-full flex justify-center align-middle flex-col">
+              <div className="text-center p-8 text-gray-600">
+                <h2 className="text-xl font-medium mb-2">Select a Session</h2>
+                <p className="text-sm">
+                  Choose a timeline entry to view the recorded keystrokes
+                </p>
               </div>
             </div>
           )}
