@@ -14,7 +14,12 @@ function App() {
     fetch("http://localhost:3001/clients")
       .then((res) => res.json())
       .then((data) => {
-        setClients(data), setSelectedClientId(data[0]?.client_id);
+        data.sort((a, b) => {
+          if (a.online !== b.online) return b.online - a.online;
+          return a.client_id.localeCompare(b.client_id);
+        });
+        setClients(data);
+        setSelectedClientId(data[0]?.client_id);
       })
       .catch((err) => console.error(err));
   }, []);
@@ -28,7 +33,12 @@ function App() {
         fetch("http://localhost:3001/clients")
           .then((res) => res.json())
           .then((data) => {
-            setClients(data), setSelectedClientId(data[0]?.client_id);
+            data.sort((a, b) => {
+              if (a.online !== b.online) return b.online - a.online;
+              return a.client_id.localeCompare(b.client_id);
+            });
+            setClients(data);
+            setSelectedClientId(data[0]?.client_id);
           })
           .catch((err) => console.error(err));
       }

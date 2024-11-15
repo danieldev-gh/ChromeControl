@@ -1,45 +1,35 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { GlobalContext } from "../App";
-import ClientSelector from "../components/ClientSelector";
-
+import MonitoringPanel from "../components/MonitoringPanel";
+import StatisticsPanel from "../components/StatisticsPanel";
 const Home = () => {
   const { selectedClientId } = React.useContext(GlobalContext);
   const [message, setMessage] = React.useState("");
+  const [data, setData] = React.useState(null);
+  const [passedTime, setPassedTime] = React.useState(null);
+  useEffect(() => {
+    fetch("http://localhost:3001/statistics")
+      .then((res) => res.json())
+      .then((data) => {
+        setData(data);
+      })
+      .catch((err) => console.error(err));
+  }, []);
+  useEffect(() => {
+    if (!data?.wakeUpTime) return;
+    setPassedTime(Date.now() - data.wakeUpTime);
+    const interval = setInterval(() => {
+      setPassedTime(Date.now() - data.wakeUpTime);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [data]);
   return (
-    <div className="flex flex-col p-2">
-      Home
-      <div className="mt-2">
-        <input
-          type="text"
-          placeholder="message"
-          className="mr-2 border-blue-500 border-2 h-8 rounded-md"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        <button
-          className="bg-blue-500 text-white h-8 px-2 rounded-md"
-          onClick={() => {
-            // send alert request to the server with the client id and message
-
-            fetch("http://localhost:3001/alert", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                client_id: selectedClientId,
-                message: message,
-              }),
-            }).catch((error) => {
-              // handle error
-              console.error(error);
-            });
-          }}
-        >
-          Alert
-        </button>
+    <div className="flex flex-col lg:flex-row flex-grow min-h-0 p-4 gap-4">
+      <div className="flex flex-col flex-1">
+        <StatisticsPanel passedTime={passedTime} data={data} className="" />
+        <div className="flex-grow"></div>
       </div>
-      <ClientSelector className="w-[20vw] mt-2" />
+      <MonitoringPanel className="flex-1 min-h-0" />
     </div>
   );
 };

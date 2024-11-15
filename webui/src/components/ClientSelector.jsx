@@ -11,7 +11,7 @@ const ClientSelector = ({ className = "" }) => {
   // Sort clients - online first, then by OS
   const sortedClients = [...clients].sort((a, b) => {
     if (a.online !== b.online) return b.online - a.online;
-    return a.os.localeCompare(b.os);
+    return a.client_id.localeCompare(b.client_id);
   });
 
   // Find selected client for display
