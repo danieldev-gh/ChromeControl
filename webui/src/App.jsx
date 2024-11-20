@@ -3,19 +3,23 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Monitor from "./pages/Monitor";
 import React from "react";
-import NotFound from "./pages/NotFound"; // Import your 404 page component
+import NotFound from "./pages/NotFound";
 import socket from "./socket";
+import NotificationLog from "./components/NotificationLog";
+import { WifiOff, Wifi } from "lucide-react";
+
 export const GlobalContext = React.createContext(null);
+
 function App() {
   const [selectedClientId, setSelectedClientId_pre] = React.useState(null);
+  const notificationRef = React.useRef();
   const setSelectedClientId = (client_id) => {
     setSelectedClientId_pre(client_id);
-    // save the selected client id to the local storage
     localStorage.setItem("selectedClientId", client_id);
   };
 
   const [clients, setClients] = React.useState([]);
-  // get clients from the server
+
   React.useEffect(() => {
     fetch("http://localhost:3001/clients")
       .then((res) => res.json())
@@ -25,10 +29,8 @@ function App() {
           return a.client_id.localeCompare(b.client_id);
         });
         setClients(data);
-        // get the selected client id from the local storage
         let clientid =
           localStorage.getItem("selectedClientId") || data[0]?.client_id;
-        // make sure client id is valid
         if (data.find((client) => client.client_id === clientid)) {
           setSelectedClientId(clientid);
         } else {
@@ -52,7 +54,24 @@ function App() {
               return a.client_id.localeCompare(b.client_id);
             });
             setClients(data);
-            setSelectedClientId(data[0]?.client_id);
+            if (
+              selectedClientId == null ||
+              !data.find((client) => client.client_id === selectedClientId)
+            ) {
+              setSelectedClientId(data[0]?.client_id);
+            }
+
+            // Add notification for connection/disconnection
+            const isConnected = event.event === "clientConnected";
+            const icon = isConnected ? (
+              <Wifi className="text-green-500" />
+            ) : (
+              <WifiOff className="text-red-500" />
+            );
+            const message = `Client ${event.client_id} ${
+              isConnected ? "connected" : "disconnected"
+            }`;
+            notificationRef.current?.addNotification(message, icon);
           })
           .catch((err) => console.error(err));
       }
@@ -61,7 +80,8 @@ function App() {
     return () => {
       socket.off("event", onEvent);
     };
-  }, []);
+  }, [selectedClientId]);
+
   return (
     <div className="w-full max-h-full h-full flex flex-col">
       <GlobalContext.Provider
@@ -72,9 +92,9 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/monitor" element={<Monitor />} />
-          <Route path="*" element={<NotFound />} />{" "}
-          {/* Set the default route to the 404 page */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
+        <NotificationLog ref={notificationRef} />
       </GlobalContext.Provider>
     </div>
   );
