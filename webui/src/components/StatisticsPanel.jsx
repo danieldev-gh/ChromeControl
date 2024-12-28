@@ -1,5 +1,12 @@
 import React from "react";
-import { Clock, Key, Cookie, Keyboard, BarChart3 } from "lucide-react";
+import {
+  Clock,
+  Key,
+  Cookie,
+  Keyboard,
+  BarChart3,
+  Database,
+} from "lucide-react";
 
 const StatisticItem = ({ icon: Icon, label, value, className = "" }) => (
   <div className={`flex items-center p-3 rounded-lg bg-gray-100 ${className}`}>
@@ -45,6 +52,11 @@ const StatisticsPanel = ({ passedTime, data, className = "" }) => {
           icon={Keyboard}
           label="Keylogs Collected"
           value={data?.keylogs || 0}
+        />
+        <StatisticItem
+          icon={Database}
+          label={"Local Storage Pairs Collected"}
+          value={data?.localstorage || 0}
         />
       </div>
     </div>

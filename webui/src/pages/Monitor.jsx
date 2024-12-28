@@ -3,9 +3,10 @@ import Cookies from "../components/Cookies";
 import Credentials from "../components/Credentials";
 import Keylogs from "../components/Keylogs";
 import { io } from "socket.io-client";
+import LocalStorage from "../components/LocalStorage";
 
 const Monitor = () => {
-  const titles = ["Credentials", "Cookies", "Keylogs"];
+  const titles = ["Cookies", "Local Storage", "Credentials", "Keylogs"];
   const [currentPage, setCurrentPage] = React.useState(0);
   // set the current page from local storage
   React.useEffect(() => {
@@ -17,13 +18,13 @@ const Monitor = () => {
   function renderPage() {
     switch (currentPage) {
       case 0:
-        return <Credentials />;
-      case 1:
         return <Cookies />;
+      case 1:
+        return <LocalStorage />;
       case 2:
-        return <Keylogs />;
-      default:
         return <Credentials />;
+      default:
+        return <Keylogs />;
     }
   }
   return (

@@ -1,5 +1,13 @@
 import React, { useEffect } from "react";
-import { Monitor, Key, Cookie, Keyboard, Clock, User } from "lucide-react";
+import {
+  Monitor,
+  Key,
+  Cookie,
+  Keyboard,
+  Clock,
+  User,
+  Database,
+} from "lucide-react";
 import { GlobalContext } from "../App";
 
 const MonitoringPanel = ({ className = "" }) => {
@@ -66,7 +74,7 @@ const MonitoringPanel = ({ className = "" }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mb-3">
+            <div className="grid grid-cols-4 gap-0 mb-3">
               <div className="flex items-center">
                 <Keyboard className="h-4 w-4 text-blue-500 mr-2" />
                 <div>
@@ -90,6 +98,15 @@ const MonitoringPanel = ({ className = "" }) => {
                 <div>
                   <div className="text-sm font-medium">{client.cookies}</div>
                   <div className="text-xs text-gray-500">Cookies</div>
+                </div>
+              </div>
+              <div className="flex items-center">
+                <Database className="h-4 w-4 text-purple-500 mr-2" />
+                <div>
+                  <div className="text-sm font-medium">
+                    {client.localstorage}
+                  </div>
+                  <div className="text-xs text-gray-500">LS pairs</div>
                 </div>
               </div>
             </div>
