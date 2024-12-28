@@ -1,7 +1,6 @@
 import React from "react";
 import { Zap, MessageCircleX } from "lucide-react";
 import { GlobalContext } from "../App";
-
 export const QuickActionsPanel = ({ className = "" }) => {
   const [message, setMessage] = React.useState("");
   const { selectedClientId } = React.useContext(GlobalContext);
@@ -34,7 +33,7 @@ export const QuickActionsPanel = ({ className = "" }) => {
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
               onClick={async () => {
                 try {
-                  await fetch("http://localhost:3001/alert", {
+                  await fetch("/alert", {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",

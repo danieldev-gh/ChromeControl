@@ -15,7 +15,7 @@ const Credentials = () => {
       setData(null);
       return;
     }
-    fetch(`http://localhost:3001/credentials/${selectedClientId}`)
+    fetch(`/credentials/${selectedClientId}`)
       .then((res) => res.json())
       .then((res) => {
         setData(res);
@@ -31,7 +31,7 @@ const Credentials = () => {
         event.event === "credentials" &&
         event.client_id === selectedClientId
       ) {
-        fetch(`http://localhost:3001/credentials/${selectedClientId}`)
+        fetch(`/credentials/${selectedClientId}`)
           .then((res) => res.json())
           .then((res) => {
             setData(res);

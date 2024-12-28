@@ -14,7 +14,7 @@ const LocalStorage = () => {
       setData(null);
       return;
     }
-    fetch(`http://localhost:3001/localstorage/${selectedClientId}`)
+    fetch(`/localstorage/${selectedClientId}`)
       .then((res) => res.json())
       .then((res) => {
         setData(res);
@@ -30,7 +30,7 @@ const LocalStorage = () => {
         event.event === "localstorage" &&
         event.client_id === selectedClientId
       ) {
-        fetch(`http://localhost:3001/localstorage/${selectedClientId}`)
+        fetch(`/localstorage/${selectedClientId}`)
           .then((res) => res.json())
           .then((res) => {
             setData(res);

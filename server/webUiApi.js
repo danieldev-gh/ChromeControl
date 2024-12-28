@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const db = require("./db"); // Adjust the path as necessary
-const { socketMaps, eventListener } = require("./sharedData");
+const { socketMaps, eventListener, config } = require("./sharedData");
 const { Server } = require("socket.io");
 // add jsdoc
 /**
@@ -12,19 +12,24 @@ const { Server } = require("socket.io");
  */
 module.exports = function initializeWebUiApi(appWebUI, server) {
   const wakeUpTime = new Date();
-  const io = new Server(server, {
-    cors: {
-      origin: "http://localhost:5173",
-    },
-  });
+  const serverOptions = config.DEVELOPMENT_MODE
+    ? {
+        cors: {
+          origin: `http://localhost:${config.DEVELOPMENT_PORT}`,
+        },
+      }
+    : {};
+  const io = new Server(server, serverOptions);
   appWebUI.use(express.json());
   appWebUI.use(express.urlencoded({ extended: true }));
   appWebUI.use(express.static(path.join(__dirname, "../webui/dist")));
-  appWebUI.use(
-    cors({
-      origin: "http://localhost:5173", // allow only this origin
-    })
-  );
+  if (config.DEVELOPMENT_MODE) {
+    appWebUI.use(
+      cors({
+        origin: `http://localhost:${config.DEVELOPMENT_PORT}`, // allow only this origin
+      })
+    );
+  }
   appWebUI.get("/statistics", (req, res) => {
     const stmt = db.prepare(
       `

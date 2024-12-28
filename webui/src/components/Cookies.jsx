@@ -14,7 +14,7 @@ const Cookies = () => {
       setData(null);
       return;
     }
-    fetch(`http://localhost:3001/cookies/${selectedClientId}`)
+    fetch(`/cookies/${selectedClientId}`)
       .then((res) => res.json())
       .then((res) => {
         setData(res);
@@ -27,7 +27,7 @@ const Cookies = () => {
   React.useEffect(() => {
     function onEvent(event) {
       if (event.event === "cookies" && event.client_id === selectedClientId) {
-        fetch(`http://localhost:3001/cookies/${selectedClientId}`)
+        fetch(`/cookies/${selectedClientId}`)
           .then((res) => res.json())
           .then((res) => {
             setData(res);

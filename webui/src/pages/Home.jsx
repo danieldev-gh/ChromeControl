@@ -9,7 +9,7 @@ const Home = () => {
   const [data, setData] = React.useState(null);
   const [passedTime, setPassedTime] = React.useState(null);
   useEffect(() => {
-    fetch("http://localhost:3001/statistics")
+    fetch(`/statistics`)
       .then((res) => res.json())
       .then((data) => {
         setData(data);

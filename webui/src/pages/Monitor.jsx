@@ -13,8 +13,6 @@ const Monitor = () => {
     setCurrentPage(parseInt(localStorage.getItem("currentPage") || "0"));
   }, []);
 
-  // connect to socketio on localhost:3000
-
   function renderPage() {
     switch (currentPage) {
       case 0:

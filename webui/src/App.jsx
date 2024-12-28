@@ -7,7 +7,6 @@ import NotFound from "./pages/NotFound";
 import socket from "./socket";
 import NotificationLog from "./components/NotificationLog";
 import { WifiOff, Wifi } from "lucide-react";
-
 export const GlobalContext = React.createContext(null);
 
 function App() {
@@ -21,7 +20,7 @@ function App() {
   const [clients, setClients] = React.useState([]);
 
   React.useEffect(() => {
-    fetch("http://localhost:3001/clients")
+    fetch("/clients")
       .then((res) => res.json())
       .then((data) => {
         data.sort((a, b) => {
@@ -46,7 +45,7 @@ function App() {
         event.event === "clientDisconnected" ||
         event.event === "clientConnected"
       ) {
-        fetch("http://localhost:3001/clients")
+        fetch("/clients")
           .then((res) => res.json())
           .then((data) => {
             data.sort((a, b) => {
