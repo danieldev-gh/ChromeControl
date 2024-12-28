@@ -25,5 +25,11 @@
       "run_at": "document_start",
       "all_frames": true
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["storage_hook.js"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }

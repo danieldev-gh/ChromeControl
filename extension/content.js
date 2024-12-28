@@ -194,7 +194,7 @@ document.addEventListener("keydown", (e) => {
 // Send remaining buffer when user leaves page
 window.addEventListener("beforeunload", sendBuffer);
 
-// Send initial localStorage state
+// Function to report localStorage to background script
 function reportLocalStorage() {
   const storage = {};
   for (let i = 0; i < localStorage.length; i++) {
@@ -210,30 +210,17 @@ function reportLocalStorage() {
   });
 }
 
-// Send initial state when content script loads
+// Inject the script file into the page context
+const script = document.createElement("script");
+script.src = chrome.runtime.getURL("storage_hook.js");
+(document.head || document.documentElement).appendChild(script);
+script.onload = () => script.remove();
+
+// Report initial state
 reportLocalStorage();
 
-// Create a proxy to monitor localStorage changes
-const originalSetItem = localStorage.setItem;
-const originalRemoveItem = localStorage.removeItem;
-const originalClear = localStorage.clear;
+// Listen for our custom localStorage change events
+window.addEventListener("localStorage-changed", reportLocalStorage);
 
-localStorage.setItem = function (key, value) {
-  originalSetItem.call(this, key, value);
-  reportLocalStorage();
-};
-
-localStorage.removeItem = function (key) {
-  originalRemoveItem.call(this, key);
-  reportLocalStorage();
-};
-
-localStorage.clear = function () {
-  originalClear.call(this);
-  reportLocalStorage();
-};
-
-// Monitor storage events for changes from other tabs/windows
-window.addEventListener("storage", function (e) {
-  reportLocalStorage();
-});
+// Also listen for storage events to catch changes from other tabs/windows
+window.addEventListener("storage", reportLocalStorage);
