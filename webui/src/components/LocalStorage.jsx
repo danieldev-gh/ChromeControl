@@ -48,7 +48,7 @@ const LocalStorage = () => {
     };
   }, [selectedClientId]);
   const headers = ["domain", "key", "value"];
-  const weights = [1, 1, 1];
+  const weights = [0.5, 1, 1];
   return (
     <div className="flex flex-grow flex-col">
       <LSPairModal

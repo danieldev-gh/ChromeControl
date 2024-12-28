@@ -48,6 +48,21 @@ const LSPairModal = ({ show, setShow, lspair }) => {
                   Copy
                 </button>
               </div>
+              <div className="flex items-center gap-2">
+                <label className="w-24 text-sm text-gray-600">Domain</label>
+                <input
+                  value={lspair.domain}
+                  readOnly
+                  type="text"
+                  className="flex-1 px-3 py-1.5 bg-gray-50 border rounded focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={() => copyToClipboard(lspair.domain)}
+                  className="px-3 py-1.5 text-sm bg-blue-50 text-blue-600 rounded-md hover:bg-blue-100 transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
             </div>
           </div>
         )}
