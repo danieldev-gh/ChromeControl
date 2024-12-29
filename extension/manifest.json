@@ -28,7 +28,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["storage_hook.js"],
+      "resources": ["storage_hook.js", "config.json"],
       "matches": ["<all_urls>"]
     }
   ]
