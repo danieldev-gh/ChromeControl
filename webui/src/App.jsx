@@ -7,6 +7,9 @@ import NotFound from "./pages/NotFound";
 import socket from "./socket";
 import NotificationLog from "./components/NotificationLog";
 import { WifiOff, Wifi } from "lucide-react";
+import Actions from "./pages/Actions";
+import Proxy from "./pages/Proxy";
+import Settings from "./pages/Settings";
 export const GlobalContext = React.createContext(null);
 
 function App() {
@@ -16,11 +19,19 @@ function App() {
     setSelectedClientId_pre(client_id);
     localStorage.setItem("selectedClientId", client_id);
   };
-
+  const [endpointUrl, setEndpointUrl_pre] = React.useState("");
+  const setEndpointUrl = (url) => {
+    setEndpointUrl_pre(url);
+    localStorage.setItem("endpointUrl", url);
+    socket = io(url);
+  };
   const [clients, setClients] = React.useState([]);
-
   React.useEffect(() => {
-    fetch("/clients")
+    const url = localStorage.getItem("endpointUrl");
+    if (url) setEndpointUrl_pre(url);
+  }, []);
+  React.useEffect(() => {
+    fetch(`${endpointUrl}/clients`)
       .then((res) => res.json())
       .then((data) => {
         data.sort((a, b) => {
@@ -37,7 +48,7 @@ function App() {
         }
       })
       .catch((err) => console.error(err));
-  }, []);
+  }, [endpointUrl]);
 
   React.useEffect(() => {
     function onEvent(event) {
@@ -45,7 +56,7 @@ function App() {
         event.event === "clientDisconnected" ||
         event.event === "clientConnected"
       ) {
-        fetch("/clients")
+        fetch(`${endpointUrl}/clients`)
           .then((res) => res.json())
           .then((data) => {
             data.sort((a, b) => {
@@ -79,18 +90,28 @@ function App() {
     return () => {
       socket.off("event", onEvent);
     };
-  }, [selectedClientId]);
+  }, [selectedClientId, endpointUrl]);
 
   return (
     <div className="w-full max-h-full h-full flex flex-col">
       <GlobalContext.Provider
-        value={{ selectedClientId, setSelectedClientId, clients, setClients }}
+        value={{
+          selectedClientId,
+          setSelectedClientId,
+          clients,
+          setClients,
+          endpointUrl,
+          setEndpointUrl,
+        }}
       >
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/monitor" element={<Monitor />} />
+          <Route path="/actions" element={<Actions />} />
+          <Route path="/proxy" element={<Proxy />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <NotificationLog ref={notificationRef} />

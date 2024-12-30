@@ -24,3 +24,9 @@ serverClients.listen(PORT_CLIENTS, () => {
 serverWebUI.listen(PORT_WEBUI, () => {
   console.log(`Web UI API server is running on port ${PORT_WEBUI}`);
 });
+
+if (config.DEVELOPMENT_MODE) {
+  console.log(
+    `Development mode enabled, allowing traffic from port: ${config.DEVELOPMENT_PORT}`
+  );
+}

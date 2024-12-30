@@ -5,7 +5,7 @@ import socket from "../socket";
 import LSPairModal from "./LSPairModal";
 const LocalStorage = () => {
   const [data, setData] = React.useState(null);
-  const { selectedClientId } = React.useContext(GlobalContext);
+  const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
   const [showModal, setShowModal] = React.useState(false);
   const [currentItem, setCurrentItem] = React.useState(null);
 
@@ -14,7 +14,7 @@ const LocalStorage = () => {
       setData(null);
       return;
     }
-    fetch(`/localstorage/${selectedClientId}`)
+    fetch(`${endpointUrl}/localstorage/${selectedClientId}`)
       .then((res) => res.json())
       .then((res) => {
         setData(res);
@@ -30,7 +30,7 @@ const LocalStorage = () => {
         event.event === "localstorage" &&
         event.client_id === selectedClientId
       ) {
-        fetch(`/localstorage/${selectedClientId}`)
+        fetch(`${endpointUrl}/localstorage/${selectedClientId}`)
           .then((res) => res.json())
           .then((res) => {
             setData(res);

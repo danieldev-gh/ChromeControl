@@ -6,7 +6,7 @@ import socket from "../socket";
 
 const Credentials = () => {
   const [data, setData] = React.useState(null);
-  const { selectedClientId } = React.useContext(GlobalContext);
+  const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
   const [showModal, setShowModal] = React.useState(false);
   const [currentItem, setCurrentItem] = React.useState(null);
 
@@ -15,7 +15,7 @@ const Credentials = () => {
       setData(null);
       return;
     }
-    fetch(`/credentials/${selectedClientId}`)
+    fetch(`${endpointUrl}/credentials/${selectedClientId}`)
       .then((res) => res.json())
       .then((res) => {
         setData(res);
@@ -31,7 +31,7 @@ const Credentials = () => {
         event.event === "credentials" &&
         event.client_id === selectedClientId
       ) {
-        fetch(`/credentials/${selectedClientId}`)
+        fetch(`${endpointUrl}/credentials/${selectedClientId}`)
           .then((res) => res.json())
           .then((res) => {
             setData(res);

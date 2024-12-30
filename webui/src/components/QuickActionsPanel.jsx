@@ -3,7 +3,7 @@ import { Zap, MessageCircleX } from "lucide-react";
 import { GlobalContext } from "../App";
 export const QuickActionsPanel = ({ className = "" }) => {
   const [message, setMessage] = React.useState("");
-  const { selectedClientId } = React.useContext(GlobalContext);
+  const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
   return (
     <div
       className={`bg-white rounded-lg shadow-lg outline outline-gray-300 outline-1 p-6 ${className}`}
@@ -33,7 +33,7 @@ export const QuickActionsPanel = ({ className = "" }) => {
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
               onClick={async () => {
                 try {
-                  await fetch("/alert", {
+                  await fetch(`${endpointUrl}/alert`, {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",

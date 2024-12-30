@@ -4,13 +4,13 @@ import { GlobalContext } from "../App";
 import socket from "../socket";
 const Keylogs = () => {
   const [data, setData] = React.useState(null);
-  const { selectedClientId } = React.useContext(GlobalContext);
+  const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
   React.useEffect(() => {
     if (!selectedClientId) {
       setData(null);
       return;
     }
-    fetch(`/keylogs/${selectedClientId}`)
+    fetch(`${endpointUrl}/keylogs/${selectedClientId}`)
       .then((res) => res.json())
       .then((res) => {
         setData(res);
@@ -23,7 +23,7 @@ const Keylogs = () => {
   React.useEffect(() => {
     function onEvent(event) {
       if (event.event === "keylogs" && event.client_id === selectedClientId) {
-        fetch(`/keylogs/${selectedClientId}`)
+        fetch(`${endpointUrl}/keylogs/${selectedClientId}`)
           .then((res) => res.json())
           .then((res) => {
             setData(res);

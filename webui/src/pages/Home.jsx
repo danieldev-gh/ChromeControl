@@ -4,18 +4,18 @@ import MonitoringPanel from "../components/MonitoringPanel";
 import StatisticsPanel from "../components/StatisticsPanel";
 import { QuickActionsPanel } from "../components/QuickActionsPanel";
 const Home = () => {
-  const { selectedClientId } = React.useContext(GlobalContext);
+  const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
   const [message, setMessage] = React.useState("");
   const [data, setData] = React.useState(null);
   const [passedTime, setPassedTime] = React.useState(null);
   useEffect(() => {
-    fetch(`/statistics`)
+    fetch(`${endpointUrl}/statistics`)
       .then((res) => res.json())
       .then((data) => {
         setData(data);
       })
       .catch((err) => console.error(err));
-  }, []);
+  }, [endpointUrl]);
   useEffect(() => {
     if (!data?.wakeUpTime) return;
     setPassedTime(Date.now() - data.wakeUpTime);

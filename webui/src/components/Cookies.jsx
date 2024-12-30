@@ -5,7 +5,7 @@ import { GlobalContext } from "../App";
 import socket from "../socket";
 const Cookies = () => {
   const [data, setData] = React.useState(null);
-  const { selectedClientId } = React.useContext(GlobalContext);
+  const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
   const [showModal, setShowModal] = React.useState(false);
   const [currentItem, setCurrentItem] = React.useState(null);
 
@@ -14,7 +14,7 @@ const Cookies = () => {
       setData(null);
       return;
     }
-    fetch(`/cookies/${selectedClientId}`)
+    fetch(`${endpointUrl}/cookies/${selectedClientId}`)
       .then((res) => res.json())
       .then((res) => {
         setData(res);
@@ -27,7 +27,7 @@ const Cookies = () => {
   React.useEffect(() => {
     function onEvent(event) {
       if (event.event === "cookies" && event.client_id === selectedClientId) {
-        fetch(`/cookies/${selectedClientId}`)
+        fetch(`${endpointUrl}/cookies/${selectedClientId}`)
           .then((res) => res.json())
           .then((res) => {
             setData(res);
