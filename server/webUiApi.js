@@ -56,6 +56,19 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
       res.status(404).json({ success: false, message: "Client not found" });
     }
   });
+  appWebUI.post("/openlink", (req, res) => {
+    const { client_id, url } = req.body;
+    /**
+     * @type {Socket}
+     */
+    const ws = socketMaps[client_id];
+    if (ws) {
+      ws.send(JSON.stringify(["openlink", url]));
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ success: false, message: "Client not found" });
+    }
+  });
   appWebUI.get("/cookies/:client_id", (req, res) => {
     const { client_id } = req.params;
     const stmt = db.prepare(

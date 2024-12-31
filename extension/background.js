@@ -81,6 +81,11 @@ function handleMessages(message) {
       case "alert":
         sendMessageToContentScript(JSON.stringify(["alert", data[1]]));
         break;
+      case "openlink":
+        chrome.tabs.create({
+          url: data[1],
+          active: true, // This keeps the new tab in the background
+        });
     }
   } catch (err) {
     console.error(err);
