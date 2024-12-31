@@ -4,7 +4,7 @@ import Home from "./pages/Home";
 import Monitor from "./pages/Monitor";
 import React from "react";
 import NotFound from "./pages/NotFound";
-import socket from "./socket";
+import socketManager from "./socket";
 import NotificationLog from "./components/NotificationLog";
 import { WifiOff, Wifi } from "lucide-react";
 import Actions from "./pages/Actions";
@@ -13,6 +13,12 @@ import Settings from "./pages/Settings";
 export const GlobalContext = React.createContext(null);
 
 function App() {
+  const [socket, setSocket] = React.useState(socketManager.getSocket());
+  React.useEffect(() => {
+    // Get notified when the socket changes
+    const cleanup = socketManager.addListener(setSocket);
+    return cleanup;
+  }, []);
   const [selectedClientId, setSelectedClientId_pre] = React.useState(null);
   const notificationRef = React.useRef();
   const setSelectedClientId = (client_id) => {
@@ -23,7 +29,7 @@ function App() {
   const setEndpointUrl = (url) => {
     setEndpointUrl_pre(url);
     localStorage.setItem("endpointUrl", url);
-    socket = io(url);
+    socketManager.connect(url);
   };
   const [clients, setClients] = React.useState([]);
   React.useEffect(() => {
@@ -90,7 +96,7 @@ function App() {
     return () => {
       socket.off("event", onEvent);
     };
-  }, [selectedClientId, endpointUrl]);
+  }, [selectedClientId, endpointUrl, socket]);
 
   return (
     <div className="w-full max-h-full h-full flex flex-col">

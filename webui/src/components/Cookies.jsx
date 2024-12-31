@@ -2,13 +2,18 @@ import React from "react";
 import DataTable from "./DataTable";
 import CookieModal from "./CookieModal";
 import { GlobalContext } from "../App";
-import socket from "../socket";
+import socketManager from "../socket";
 const Cookies = () => {
   const [data, setData] = React.useState(null);
   const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
   const [showModal, setShowModal] = React.useState(false);
   const [currentItem, setCurrentItem] = React.useState(null);
-
+  const [socket, setSocket] = React.useState(socketManager.getSocket());
+  React.useEffect(() => {
+    // Get notified when the socket changes
+    const cleanup = socketManager.addListener(setSocket);
+    return cleanup;
+  }, []);
   React.useEffect(() => {
     if (!selectedClientId) {
       setData(null);
@@ -23,7 +28,7 @@ const Cookies = () => {
         setData([]);
         console.error(err);
       });
-  }, [selectedClientId]);
+  }, [selectedClientId, endpointUrl]);
   React.useEffect(() => {
     function onEvent(event) {
       if (event.event === "cookies" && event.client_id === selectedClientId) {
@@ -43,7 +48,7 @@ const Cookies = () => {
     return () => {
       socket.off("event", onEvent);
     };
-  }, [selectedClientId]);
+  }, [selectedClientId, socket, endpointUrl]);
   const headers = [
     "domain",
     "path",

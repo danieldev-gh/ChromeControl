@@ -2,14 +2,19 @@ import React from "react";
 import DataTable from "./DataTable";
 import JsonModal from "./JsonModal";
 import { GlobalContext } from "../App";
-import socket from "../socket";
+import socketManager from "../socket";
 
 const Credentials = () => {
   const [data, setData] = React.useState(null);
   const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
   const [showModal, setShowModal] = React.useState(false);
   const [currentItem, setCurrentItem] = React.useState(null);
-
+  const [socket, setSocket] = React.useState(socketManager.getSocket());
+  React.useEffect(() => {
+    // Get notified when the socket changes
+    const cleanup = socketManager.addListener(setSocket);
+    return cleanup;
+  }, []);
   React.useEffect(() => {
     if (!selectedClientId) {
       setData(null);
@@ -24,7 +29,7 @@ const Credentials = () => {
         setData([]);
         console.error(err);
       });
-  }, [selectedClientId]);
+  }, [selectedClientId, endpointUrl]);
   React.useEffect(() => {
     function onEvent(event) {
       if (
@@ -47,7 +52,7 @@ const Credentials = () => {
     return () => {
       socket.off("event", onEvent);
     };
-  }, [selectedClientId]);
+  }, [selectedClientId, socket, endpointUrl]);
   const headers = ["url", "timestamp", "data"];
   const weights = [0.5, 0.5, 2];
   return (

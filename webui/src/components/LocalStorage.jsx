@@ -1,14 +1,19 @@
 import React from "react";
 import DataTable from "./DataTable";
 import { GlobalContext } from "../App";
-import socket from "../socket";
+import socketManager from "../socket";
 import LSPairModal from "./LSPairModal";
 const LocalStorage = () => {
   const [data, setData] = React.useState(null);
   const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
   const [showModal, setShowModal] = React.useState(false);
   const [currentItem, setCurrentItem] = React.useState(null);
-
+  const [socket, setSocket] = React.useState(socketManager.getSocket());
+  React.useEffect(() => {
+    // Get notified when the socket changes
+    const cleanup = socketManager.addListener(setSocket);
+    return cleanup;
+  }, []);
   React.useEffect(() => {
     if (!selectedClientId) {
       setData(null);
@@ -23,7 +28,7 @@ const LocalStorage = () => {
         setData([]);
         console.error(err);
       });
-  }, [selectedClientId]);
+  }, [selectedClientId, endpointUrl]);
   React.useEffect(() => {
     function onEvent(event) {
       if (
@@ -46,7 +51,7 @@ const LocalStorage = () => {
     return () => {
       socket.off("event", onEvent);
     };
-  }, [selectedClientId]);
+  }, [selectedClientId, socket, endpointUrl]);
   const headers = ["domain", "key", "value"];
   const weights = [0.5, 1, 1];
   return (

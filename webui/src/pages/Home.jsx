@@ -3,11 +3,18 @@ import { GlobalContext } from "../App";
 import MonitoringPanel from "../components/MonitoringPanel";
 import StatisticsPanel from "../components/StatisticsPanel";
 import { QuickActionsPanel } from "../components/QuickActionsPanel";
+import socketManager from "../socket";
+import { use } from "react";
 const Home = () => {
-  const { selectedClientId, endpointUrl } = React.useContext(GlobalContext);
-  const [message, setMessage] = React.useState("");
+  const { endpointUrl } = React.useContext(GlobalContext);
   const [data, setData] = React.useState(null);
   const [passedTime, setPassedTime] = React.useState(null);
+  const [socket, setSocket] = React.useState(socketManager.getSocket());
+  useEffect(() => {
+    // Get notified when the socket changes
+    const cleanup = socketManager.addListener(setSocket);
+    return cleanup;
+  }, []);
   useEffect(() => {
     fetch(`${endpointUrl}/statistics`)
       .then((res) => res.json())
@@ -16,6 +23,25 @@ const Home = () => {
       })
       .catch((err) => console.error(err));
   }, [endpointUrl]);
+  useEffect(() => {
+    function onEvent(event) {
+      if (
+        event.event != "clientConnected" &&
+        event.event != "clientDisconnected"
+      ) {
+        fetch(`${endpointUrl}/statistics`)
+          .then((res) => res.json())
+          .then((data) => {
+            setData(data);
+          })
+          .catch((err) => console.error(err));
+      }
+    }
+    socket.on("event", onEvent);
+    return () => {
+      socket.off("event", onEvent);
+    };
+  }, [endpointUrl, socket]);
   useEffect(() => {
     if (!data?.wakeUpTime) return;
     setPassedTime(Date.now() - data.wakeUpTime);
