@@ -65,6 +65,11 @@ graph LR
 - Automated browser extension deployment
 - Persistence mechanisms
 
+### Clients as Proxies
+- Proxy communication between client and server
+- Simulated browser enviroment in the webui
+- Browse as the client
+
 ## 🛠️ Installation & Setup
 [Setup instructions to be added]
 
@@ -74,11 +79,14 @@ graph LR
 ## 📋 Todo List
 
 ### General
-- [ ] make an injector to force install the extension/payload
-- [ ] make a payload builder which builds the extension for a target url and config
+- [x] make an injector to force install the extension/payload
+- [x] make a payload builder which builds the extension for a target url and config
 - [ ] make a setup script
 - [ ] add use instructions
 - [ ] add setup instructions
+- [ ] add more actions (ddos, redirect, etc)
+- [ ] add more options to the payload builder
+- [ ] figure out a way to do the proxying
 
 ### Server
 [To be populated]
