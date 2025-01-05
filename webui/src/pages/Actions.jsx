@@ -58,7 +58,7 @@ const Actions = () => {
             <h2 className="text-xl font-bold text-gray-800">Actions</h2>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-y-auto">
           <ActionBox
             title="Send Alert"
             description="Send an alert to a client"
@@ -67,9 +67,7 @@ const Actions = () => {
           />
           <ActionBox
             title="Open Tab"
-            description={
-              "Open a new tab in a client's browser (mainly for trolling)"
-            }
+            description="Open a new tab in a client's browser (mainly for trolling)"
             submitText="Open"
             inputPlaceholder="Enter URL"
             icon={ExternalLink}
