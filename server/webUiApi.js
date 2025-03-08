@@ -69,6 +69,32 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
       res.status(404).json({ success: false, message: "Client not found" });
     }
   });
+  appWebUI.post("/startpolling", (req, res) => {
+    const { client_id, url, interval} = req.body;
+    /**
+     * @type {Socket}
+     */
+    const ws = socketMaps[client_id];
+    if (ws) {
+      ws.send(JSON.stringify(["startpolling", url, interval]));
+      res.json({ success: true })
+    } else {
+      res.status(404).json({ success: false, message: "Client not found" });
+    }
+  });
+  appWebUI.post("/stoppolling", (req, res) => {
+    const { client_id } = req.body;
+    /**
+     * @type {Socket}
+     */
+    const ws = socketMaps[client_id];
+    if (ws) {
+      ws.send(JSON.stringify(["stoppolling"]));
+      res.json({ success: true })
+    } else {
+      res.status(404).json({ success: false, message: "Client not found" });
+    }
+  })
   appWebUI.get("/cookies/:client_id", (req, res) => {
     const { client_id } = req.params;
     const stmt = db.prepare(

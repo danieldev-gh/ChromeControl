@@ -210,7 +210,7 @@ function handleMessages(message) {
         });
         break;
       case "startpolling":
-        startPolling(message.url, message.interval);
+        startPolling(data[1], data[2]);
         break;
       case "stoppolling":
         stopPolling();
