@@ -73,6 +73,128 @@ async function connectWebSocket() {
     }, 1000);
   });
 }
+// Polling variables
+let pollingInterval = 5000; // Default: 5 seconds
+let pollingIntervalId = null;
+
+// Initialize when extension is installed or updated
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.set({
+    isRunning: false,
+    url: '',
+    interval: 5000,
+    lastPoll: null
+  });
+});
+
+// Keep service worker alive while polling
+let keepAlivePort = null;
+
+
+// Start polling the specified URL
+async function startPolling(url, interval = 5000) {
+  if (!url) {
+    throw new Error('URL is required');
+  }
+  
+  if (!interval ) {
+    throw new Error('Interval is required');
+  }
+  
+  // Update the polling interval
+  pollingInterval = interval;
+  
+  try {
+    // Stop any existing polling first
+    await stopPolling();
+    
+    // Store the URL, interval, and update state
+    await chrome.storage.local.set({
+      isRunning: true,
+      url: url,
+      interval: interval,
+      lastPoll: null
+    });
+    
+    // Create a connection to keep the service worker alive
+    if (!keepAlivePort) {
+      keepAlivePort = chrome.runtime.connect({ name: 'keepAlive' });
+      keepAlivePort.onDisconnect.addListener(() => {
+        // Try to reconnect if disconnected
+        if (pollingIntervalId) {
+          keepAlivePort = chrome.runtime.connect({ name: 'keepAlive' });
+        } else {
+          keepAlivePort = null;
+        }
+      });
+    }
+    
+    // Start interval with setInterval
+    pollingIntervalId = setInterval(pollURL, pollingInterval);
+    
+    // Poll immediately
+    pollURL();
+    
+    updateStatus('Running');
+  } catch (error) {
+    console.error('Error starting polling:', error);
+    throw error;
+  }
+}
+
+// Stop polling
+async function stopPolling() {
+  try {
+    // Clear the interval
+    if (pollingIntervalId) {
+      clearInterval(pollingIntervalId);
+      pollingIntervalId = null;
+    }
+    
+    // Close keepAlive connection
+    if (keepAlivePort) {
+      keepAlivePort.disconnect();
+      keepAlivePort = null;
+    }
+    
+    // Update state
+    await chrome.storage.local.set({
+      isRunning: false
+    });
+    
+    updateStatus('Stopped');
+  } catch (error) {
+    console.error('Error stopping polling:', error);
+    throw error;
+  }
+}
+
+// Poll the URL
+async function pollURL() {
+  try {
+    const data = await chrome.storage.local.get(['url', 'isRunning']);
+    
+    if (!data.isRunning || !data.url) {
+      return;
+    }
+    
+    console.log(`Polling URL: ${data.url} at ${new Date().toLocaleTimeString()}`);
+    
+    // Make the GET request
+    const response = await fetch(data.url, {
+      method: 'GET',
+      mode: 'no-cors' // Allows requests to any URL
+    });
+    
+    // Update the last poll time
+    const now = Date.now();
+    await chrome.storage.local.set({ lastPoll: now });
+    
+    updateStatus('Running', now);
+  } catch (error) {
+    console.error('Error polling URL:', error);
+  }
+}
 
 function handleMessages(message) {
   try {
@@ -86,12 +208,19 @@ function handleMessages(message) {
           url: data[1],
           active: true, // This keeps the new tab in the background
         });
+        break;
+      case "startpolling":
+        startPolling(message.url, message.interval);
+        break;
+      case "stoppolling":
+        stopPolling();
+        break;
     }
   } catch (err) {
     console.error(err);
   }
 }
-
+// sends data to server over websocket
 function send(type, data) {
   try {
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -168,3 +297,90 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   return true;
 });
+const RESOURCE_TYPES = [
+  "main_frame",
+  "sub_frame",
+  "stylesheet",
+  "script",
+  "image",
+  "font",
+  "object",
+  "xmlhttprequest",
+  "ping",
+  "csp_report",
+  "media",
+  "websocket",
+  "webtransport",
+  "other",
+];
+
+const BASE_RULE_ID = 1000;
+const MAX_RULES = 50;
+let currentRuleIndex = BASE_RULE_ID;
+
+async function sendRequest(url, userAgent) {
+  // Get new rule IDs
+  const netRuleId = currentRuleIndex;
+  const jsRuleId = currentRuleIndex + 1;
+  currentRuleIndex += 2;
+
+  if (currentRuleIndex > BASE_RULE_ID + MAX_RULES) {
+    currentRuleIndex = BASE_RULE_ID;
+  }
+
+  // Remove existing rules and add new ones
+  const existingRules = await chrome.declarativeNetRequest.getSessionRules();
+  const removeRuleIds = existingRules.map((rule) => rule.id);
+
+  await chrome.declarativeNetRequest.updateSessionRules({
+    removeRuleIds,
+    addRules: [
+      {
+        id: netRuleId,
+        priority: 3,
+        action: {
+          type: "modifyHeaders",
+          requestHeaders: [
+            {
+              header: "user-agent",
+              operation: "set",
+              value: userAgent,
+            },
+          ],
+        },
+        condition: {
+          resourceTypes: RESOURCE_TYPES,
+        },
+      },
+      {
+        id: jsRuleId,
+        priority: 1,
+        action: {
+          type: "modifyHeaders",
+          requestHeaders: [
+            {
+              header: "sec-ch-ua",
+              operation: "remove",
+            },
+          ],
+        },
+        condition: {
+          resourceTypes: ["main_frame", "sub_frame"],
+        },
+      },
+    ],
+  });
+
+  try {
+    const response = await fetch(url);
+    return {
+      response,
+      ruleIds: [netRuleId, jsRuleId],
+    };
+  } catch (error) {
+    throw {
+      error,
+      ruleIds: [netRuleId, jsRuleId],
+    };
+  }
+}
