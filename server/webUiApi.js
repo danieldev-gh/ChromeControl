@@ -166,6 +166,7 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
     const statistics = stmt.all().map((client) => ({
       ...client,
       online: Object.keys(socketMaps).includes(client.client_id),
+      isPolling: Object.keys(socketMaps).includes(client.client_id) ? (socketMaps[client.client_id].isPolling ? true:false) : false
     }));
 
     res.json(statistics);

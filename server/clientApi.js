@@ -39,6 +39,10 @@ module.exports = function initializeClientApi(appClients, server) {
             handleSetLocalStorage(client_id, data[1]);
             sendEvent("localstorage", client_id);
             break;
+          case "pollingstate":
+            handleSetPollingState(client_id, data[1]);
+            sendEvent("pollingstate", client_id);
+            break;
         }
       } catch (err) {
         console.error(err);
@@ -52,6 +56,9 @@ module.exports = function initializeClientApi(appClients, server) {
     });
   });
 };
+function handleSetPollingState(client_id, state) {
+  socketMaps[client_id].isPolling = state.state;
+}
 function handleSetCookies(client_id, cookies) {
   db.transaction(() => {
     const stmt = db.prepare(
