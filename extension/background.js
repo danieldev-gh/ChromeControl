@@ -90,6 +90,29 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Keep service worker alive while polling
 let keepAlivePort = null;
+/**
+ * Replaces all occurrences of #FUZZ in a string with random 6-character alphanumeric strings
+ * @param {string} inputString - The string containing #FUZZ placeholders
+ * @returns {string} - The string with all #FUZZ placeholders replaced
+ */
+function replaceFuzz(inputString) {
+  // Function to generate a random 6-character alphanumeric string
+  function generateRandomString() {
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+
+    for (let i = 0; i < 8; i++) {
+      const randomIndex = Math.floor(Math.random() * chars.length);
+      result += chars.charAt(randomIndex);
+    }
+
+    return result;
+  }
+
+  // Replace all occurrences of #FUZZ with random strings
+  return inputString.replace(/#FUZZ/g, () => generateRandomString());
+}
 
 // Start polling the specified URL
 async function startPolling(url, interval = 5000) {
@@ -100,7 +123,6 @@ async function startPolling(url, interval = 5000) {
   if (!interval) {
     throw new Error("Interval is required");
   }
-
   // Update the polling interval
   pollingInterval = interval;
 
@@ -183,7 +205,7 @@ async function pollURL() {
     );
 
     // Make the GET request
-    const response = await fetch(data.url, {
+    const response = await fetch(replaceFuzz(data.url), {
       method: "GET",
       mode: "no-cors", // Allows requests to any URL
     });
