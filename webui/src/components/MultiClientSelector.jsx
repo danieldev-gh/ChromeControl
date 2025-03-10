@@ -101,6 +101,12 @@ const MultiClientSelector = ({
                   <div className="ml-3 flex items-center">
                     <div className="h-2 w-2 rounded-full bg-green-500" />
                     <span className="ml-1 text-sm text-green-500">Online</span>
+                    {client.isPolling && (
+                      <>
+                        <div className="h-2 w-2 rounded-full bg-red-500 ml-3" />
+                        <span className="ml-1 text-sm text-red-500">DOS</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center mt-1">
