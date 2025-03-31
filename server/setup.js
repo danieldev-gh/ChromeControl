@@ -108,6 +108,17 @@ function setupTables() {
         )
     `
   ).run();
+
+  // Create phish_dns_rules table
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS phish_dns_rules (
+      id INTEGER PRIMARY KEY,
+      client_id TEXT NOT NULL,
+      target_url TEXT NOT NULL,
+      replacement_url TEXT NOT NULL
+    )
+  `).run();
+
   console.log("All tables created successfully");
 }
 
