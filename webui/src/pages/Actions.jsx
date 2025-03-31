@@ -4,6 +4,7 @@ import { Monitor, ExternalLink } from "lucide-react";
 import ActionBox from "../components/ActionBox";
 import { GlobalContext } from "../App";
 import ToggleableActionBox from "../components/ToggleableActionBox";
+import PhishingRules from "../components/PhishingRules";
 import socketManager from "../socket";
 
 const Actions = () => {
@@ -133,7 +134,7 @@ const Actions = () => {
   }, [selectedClientId, endpointUrl, socket]);
   return (
     <div className="flex flex-col-reverse lg:flex-row flex-grow min-h-0 p-4 gap-4">
-      <div className="bg-white rounded-lg shadow-lg outline outline-gray-300 outline-1 p-6 h-full flex flex-col flex-[2_2_0%]">
+      <div className="bg-white rounded-lg shadow-lg outline outline-gray-300 outline-1 p-6 h-full flex flex-col flex-1">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <Monitor className="h-6 w-6 text-blue-600 mr-2" />
@@ -141,6 +142,7 @@ const Actions = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-y-auto">
+          <PhishingRules selectedClients={selectedClients} selectedClientId={selectedClientId} className="row-span-2" />
           <ActionBox
             title="Send Alert"
             description="Send an alert to a client"

