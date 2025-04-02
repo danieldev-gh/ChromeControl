@@ -4,9 +4,6 @@
   <img src="/webui/public/icon.png" alt="ChromeControl Logo" width="100"/>
 </div>
 
-
-
-
 [![Project Status](https://img.shields.io/badge/status-in_development-yellow.svg)]()
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)]()
 
@@ -21,6 +18,7 @@ ChromeControl is a comprehensive browser monitoring system that combines a Chrom
 ### 🔌 Extension Capabilities
 
 - 🌐 Browser data access through Chrome Extension API
+- ⚡ Site content replacement (phishing capabilities)
 - ⌨️ Precise keystroke capture with timing data
 - 📝 Form submission capture
 - 💾 localStorage monitoring
@@ -35,6 +33,13 @@ ChromeControl is a comprehensive browser monitoring system that combines a Chrom
 - 🗄️ SQLite database for data storage
 - ⏺️ Advanced keystroke replay functionality
 - 🔄 Remote command execution
+
+### Injector Executable 💉
+
+- Force installs extension into Chrome browser
+- Uses enterprise policy registry keys
+- Automated browser extension deployment
+- Persistence mechanisms
 
 ## 🏗️ Technical Architecture
 
@@ -58,27 +63,25 @@ graph LR
 
 ## 🚀 Planned Features
 
-### Injector Executable 💉
+### 📜 Script Execution
 
-- Force installs extension into Chrome browser
-- Uses enterprise policy registry keys
-- Automated browser extension deployment
-- Persistence mechanisms
+- Client-side script execution capabilities
+- Support for userscripts integration
 
-### Clients as Proxies
-- Proxy communication between client and server
-- Simulated browser enviroment in the webui
-- Browse as the client
+[More features to be added]
 
 ## 🛠️ Installation & Setup
+
 [Setup instructions to be added]
 
 ## 👥 Contributing
+
 [Contribution guidelines to be added]
 
 ## 📋 Todo List
 
 ### General
+
 - [x] make an injector to force install the extension/payload
 - [x] make a payload builder which builds the extension for a target url and config
 - [ ] make a setup script
@@ -89,12 +92,15 @@ graph LR
 - [ ] figure out a way to do the proxying
 
 ### Server
+
 [To be populated]
 
 ### WebUI
+
 [To be populated]
 
 ### Extension
+
 [To be populated]
 
 ---
