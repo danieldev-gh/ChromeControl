@@ -8,7 +8,7 @@ import socketManager from "./socket";
 import NotificationLog from "./components/NotificationLog";
 import { WifiOff, Wifi } from "lucide-react";
 import Actions from "./pages/Actions";
-import Proxy from "./pages/Proxy";
+import Files from "./pages/Files";
 import Settings from "./pages/Settings";
 export const GlobalContext = React.createContext(null);
 
@@ -116,7 +116,7 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/monitor" element={<Monitor />} />
           <Route path="/actions" element={<Actions />} />
-          <Route path="/proxy" element={<Proxy />} />
+          <Route path="/files" element={<Files />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

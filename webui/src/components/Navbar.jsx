@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const links = ["Home", "Monitor", "Actions", "Proxy", "Settings"];
+  const links = ["Home", "Monitor", "Actions", "Files", "Settings"];
   const isCurrentPath = (path) =>
     location.pathname === `/${path.toLowerCase()}`;
 
