@@ -275,9 +275,48 @@ module.exports = function initializeWebUiApi(appWebUI, server) {
       if (err) {
         return res.status(500).json({ error: "Failed to list files" });
       }
-      res.json(files);
+      // Get file stats for each file
+      const fileDetails = files.map((filename) => {
+        const stats = fs.statSync(path.join(uploadDir, filename));
+        return {
+          name: filename,
+          size: stats.size,
+          createdAt: stats.birthtime,
+        };
+      });
+      res.json(fileDetails);
     });
   });
+
+  // Add endpoint to download a file
+  appWebUI.get("/api/files/:filename", (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(uploadDir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    res.download(filePath, filename);
+  });
+
+  // Add endpoint to delete a file
+  appWebUI.delete("/api/files/:filename", (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(uploadDir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    try {
+      fs.unlinkSync(filePath);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete file" });
+    }
+  });
+
   appWebUI.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "../webui/dist", "index.html"));
   });
